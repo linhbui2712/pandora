@@ -404,11 +404,11 @@ def get_adder_reduction():
 
     
 if __name__ == "__main__":
-    fig_speed()
-    fig_rsa()
-    fig_fh()
-    fig_multi()
+    # fig_speed()
+    # fig_rsa()
+    # fig_fh()
+    # fig_multi()
     fig_adders()
-    fig_verification()
+    # fig_verification()
 
  

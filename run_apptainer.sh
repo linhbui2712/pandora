@@ -1,22 +1,33 @@
 
-# Check if the first file is a json config
+# # Check if the first file is a json config
+# INITDBPORT=""
+# if [[ $2 == *json ]]
+# then
+#     # Read the port number from JSON config
+#     PYTHONPORT="import json;file=open('$2', 'r');print(json.load(file)['port'])"
+#     PYTHON_USER="import json;file=open('$2', 'r');print(json.load(file)['user'])"
+#     PYTHON_DB_NAME="import json;file=open('$2', 'r');print(json.load(file)['database'])"
+#     PORT=$(echo $PYTHONPORT | python3)
+#     USER=$(echo $PYTHON_USER | python3)
+#     DB_NAME=$(echo $PYTHON_DB_NAME | python3)
+
+#     INITDBPORT="-p $PORT"
+
+#     # shift the parameters of the script effectively pop-ing $1?
+#     # https://stackoverflow.com/a/9057699
+#     # shift
+# fi
+
+# For running main.py, replace the code aboe with this:
+
 INITDBPORT=""
-if [[ $2 == *json ]]
-then
-    # Read the port number from JSON config
-    PYTHONPORT="import json;file=open('$2', 'r');print(json.load(file)['port'])"
-    PYTHON_USER="import json;file=open('$2', 'r');print(json.load(file)['user'])"
-    PYTHON_DB_NAME="import json;file=open('$2', 'r');print(json.load(file)['database'])"
-    PORT=$(echo $PYTHONPORT | python3)
-    USER=$(echo $PYTHON_USER | python3)
-    DB_NAME=$(echo $PYTHON_DB_NAME | python3)
 
-    INITDBPORT="-p $PORT"
+CONFIG="default_config.json"
 
-    # shift the parameters of the script effectively pop-ing $1?
-    # https://stackoverflow.com/a/9057699
-    # shift
-fi
+PYTHONPORT="import json; file=open('$CONFIG'); print(json.load(file)['port'])"
+PORT=$(echo "$PYTHONPORT" | python3)
+
+INITDBPORT="-p $PORT"
 
 # Outside of Slurm use the PROCESSID and save it for later reference
 # Use $PORT for the postgre port

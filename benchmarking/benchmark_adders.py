@@ -127,7 +127,7 @@ async def main():
         adder_circuit = get_adder(n_bits=n_bits)
         adder_circuit = replace_all_toffolis_qiskit(adder_circuit)
         
-        db = PandoraDB()
+        db = PandoraDB("default_config.json")
         await db.connect()
         
         try:

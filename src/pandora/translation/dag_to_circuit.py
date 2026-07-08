@@ -13,6 +13,7 @@ from pandora.exceptions.exceptions import (
 from pandora.translation.translator import (
     SINGLE_QUBIT_GATES,
     TWO_QUBIT_GATES,
+    THREE_QUBIT_GATES,
     PandoraGateTranslator,
 )
 from pandora.translation.gates import (
@@ -32,7 +33,7 @@ class PandoraDAG:
 
     def _build(self):
         for w in self.wrapped.values():
-            for prev_id in (w.prev_id1, w.prev_id2):
+            for prev_id in (w.prev_id1, w.prev_id2, w.prev_id3):
                 if prev_id is None:
                     continue
 
@@ -150,6 +151,9 @@ class PandoraCircuitReconstructor:
             self._assign_two_qubit(w, wrapped)
             return
 
+        if gate_type in THREE_QUBIT_GATES:
+            self._assign_three_qubit(w, wrapped)
+            return
         raise NotImplementedError(
             f"Reconstruction for gate type {gate_type} is not supported"
         )
@@ -210,13 +214,42 @@ class PandoraCircuitReconstructor:
         w.q1 = self._qubit_from_port(prev1, w.gate.prev_q1, w.gate.id)
         w.q2 = self._qubit_from_port(prev2, w.gate.prev_q2, w.gate.id)
 
+    def _assign_three_qubit(
+        self,
+        w: PandoraGateWrapper,
+        wrapped: dict[int, PandoraGateWrapper],
+    ) -> None:
+
+        if (
+            w.prev_id1 is None
+            or w.prev_id2 is None
+            or w.prev_id3 is None
+        ):
+            raise PandoraGateWrappedMissingQubits(
+                f"Three-qubit gate {w.gate.id} is missing predecessors"
+            )
+
+        prev1 = wrapped[w.prev_id1]
+        prev2 = wrapped[w.prev_id2]
+        prev3 = wrapped[w.prev_id3]
+
+        w.q1 = self._qubit_from_port(prev1, w.gate.prev_q1, w.gate.id)
+        w.q2 = self._qubit_from_port(prev2, w.gate.prev_q2, w.gate.id)
+        w.q3 = self._qubit_from_port(prev3, w.gate.prev_q3, w.gate.id)
     @staticmethod
     def _to_cirq(wrapped: list[PandoraGateWrapper], n_qubits: int) -> cirq.Circuit:
         circuit = cirq.Circuit()
         q = [cirq.NamedQubit(str(i)) for i in range(n_qubits)]
 
         for w in wrapped:
-            if w.prev_id1 is None and w.next_id1 is None:
+            if (
+                w.prev_id1 is None
+                and w.prev_id2 is None
+                and w.prev_id3 is None
+                and w.next_id1 is None
+                and w.next_id2 is None
+                and w.next_id3 is None
+            ):
                 raise PandoraWrappedGateMissingLinks
 
             op = w.to_cirq_operation()

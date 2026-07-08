@@ -8,6 +8,10 @@ from pandora.translation.gates import (
 
 
 class GateRepository:
+    """
+    A repository for managing PandoraGate instances in the database.
+    """
+    
     def __init__(self, db: PandoraDB, table: str = "linked_circuit"):
         self.db = db
         self.table = table

@@ -197,6 +197,13 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
+    def tofc_to_cntofn(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call linked_tofc_to_cntofn({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
     def fuse_single_qubit_gates(
         self,
         gate_types: tuple[
@@ -228,6 +235,20 @@ class PandoraOptimiser:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
                 f"call commute_single_control_left("
+                f"{gate_type.value}, {gate_param}, "
+                f"{self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
+    def commute_toffoli_with_cnot(
+        self,
+        gate_type: PandoraGateTranslator,
+        gate_param: float = 1.0,
+        dedicated_nproc: int | None = None,
+    ) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call tc_to_cntn("
                 f"{gate_type.value}, {gate_param}, "
                 f"{self.pass_count}, {self.timeout})"
             )

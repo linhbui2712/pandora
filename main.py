@@ -52,8 +52,8 @@ async def run_adder(config_file, N_BITS: int):
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',
-                        help='PostgreSQL config file path',
-                        default=None)
+                        default="default_config.json",
+                        help="PostgreSQL config file path")
 
     subparsers = parser.add_subparsers(dest='mode', required=True)
 

@@ -51,7 +51,7 @@ begin
             select * into cx from linked_circuit where id = gate.id for update skip locked;
 
             if cx.id is null
-                or cx.type != all(cx_types)
+                or cx.type != all(cx_types) -- recheck in case of other process has changed the gate type
             then
                 commit;
                 continue;

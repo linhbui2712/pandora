@@ -1,3 +1,5 @@
+-- Helper functions for decoding and encoding the compact edge links used by the rewrite rules.
+-- Each link stores the target gate id, the port number, and the gate type in a single bigint.
 CREATE OR REPLACE FUNCTION get_port_from_link(link bigint)
 RETURNS bigint
 LANGUAGE sql
@@ -6,6 +8,7 @@ AS $$
     SELECT mod(div(link, 100), 10);
 $$;
 
+-- Extract the gate type encoded in a link.
 CREATE OR REPLACE FUNCTION get_type_from_link(link bigint)
 RETURNS bigint
 LANGUAGE sql
@@ -14,6 +17,7 @@ AS $$
     SELECT mod(link, 100);
 $$;
 
+-- Extract the target gate id encoded in a link.
 CREATE OR REPLACE FUNCTION get_id_from_link(link bigint)
 RETURNS bigint
 LANGUAGE sql
@@ -22,6 +26,7 @@ AS $$
     SELECT div(link, 1000);
 $$;
 
+-- Build a compact link from a gate id, port, and gate type.
 CREATE OR REPLACE FUNCTION create_link(id bigint, port int, type smallint)
 RETURNS bigint
 LANGUAGE sql
@@ -30,6 +35,8 @@ AS $$
     SELECT id * 1000 + port * 100 + type;
 $$;
 
+-- Main circuit representation used by the rewrite procedures.
+-- Each row is a gate and its predecessor/successor connections are stored as encoded links.
 create table IF NOT EXISTS public.linked_circuit
 (
     id      bigserial primary key,
@@ -50,13 +57,14 @@ create table IF NOT EXISTS public.linked_circuit
     meas_key smallint
 ) WITH (FILLFACTOR = 100);
 
--- For equivalence benchamrk
+-- Index used by the equivalence benchmark queries.
 CREATE INDEX linked_circuit_type_idx on linked_circuit(type);
 
+-- Index that helps locate gates whose two outgoing links point to the same next gate.
 CREATE INDEX linked_circuit_next_ids_equal_idx on linked_circuit(type, (get_type_from_link(next_q1)))
 where get_id_from_link(next_q1) = get_id_from_link(next_q2);
--- For equivalence benchamrk
 
+-- Registry of supported gate names and their integer ids.
 CREATE TABLE IF NOT EXISTS gate_types (
     id smallint unique not null,
     name text unique not null
@@ -96,6 +104,7 @@ INSERT INTO gate_types (id, name) VALUES
 (30, 'tdag'),
 (31, 'swap');
 
+-- Stores aggregate statistics collected while running optimisation procedures.
 create table IF NOT EXISTS public.optimization_results
 (
     id int,
@@ -108,6 +117,7 @@ create table IF NOT EXISTS public.optimization_results
     x_count int
 );
 
+-- Batched circuit table used for intermediate processing steps.
 create table IF NOT EXISTS public.batched_circuit
 (
     id int,
@@ -127,6 +137,7 @@ create table IF NOT EXISTS public.batched_circuit
     meas_key smallint
 );
 
+-- Test-oriented variant of linked_circuit with an extra qubit_name column.
 create table IF NOT EXISTS public.linked_circuit_test
 (
     id      bigserial primary key,
@@ -147,6 +158,7 @@ create table IF NOT EXISTS public.linked_circuit_test
     qubit_name varchar(50)
 );
 
+-- Stores benchmark timing and count information for the benchmarking pipeline.
 create table IF NOT EXISTS public.benchmark_results
 (
     id      int primary key,
@@ -162,34 +174,40 @@ create table IF NOT EXISTS public.benchmark_results
 
 create extension IF NOT EXISTS tsm_system_rows;
 
+-- Simple coordination table used to signal when the optimisation loop should stop.
 create table if not exists public.stop_condition
 (
     stop boolean default false
 );
 
+-- Tracks how many optimisation rounds were missed during execution.
 create table if not exists public.max_missed_rounds
 (
     missed int default 0
 );
 
+-- Records how many times each rewrite procedure has been applied.
 create table if not exists public.rewrite_count
 (
     proc_id int primary key,
     count int default 0
 );
 
+-- Stores the graph edges used by the widgetization and decomposition pipeline.
 create table if not exists public.edge_list
 (
     source bigint,
     target bigint
 );
 
+-- Temporary table for tracking CX gates that need special handling.
 create table if not exists public.mem_cx
 (
     id bigint primary key
 );
 
 
+-- Layered representation used by the LSCOM-related pipeline.
 create table IF NOT EXISTS public.layered_lscom
 (
     id        bigserial primary key, 

@@ -73,7 +73,8 @@ begin
 
             new_next_for_sq := create_link(second.id, 0, second.type);
             new_prev_for_sq := create_link(first.id, 0, first.type);
-
+            
+            -- update left and right links
             if get_port_from_link(first.prev_q1) = 0 then
                 update linked_circuit set next_q1 = new_next_for_sq where id = sg_prev_id;
             else

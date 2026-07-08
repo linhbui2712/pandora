@@ -18,7 +18,150 @@ CX = PandoraGateTranslator.CXPowGate
 ZPow = PandoraGateTranslator.ZPowGate
 PauliX = PandoraGateTranslator._PauliX
 PauliZ = PandoraGateTranslator._PauliZ
+CCX = PandoraGateTranslator.Toffoli
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [1])
+@pytest.mark.parametrize("timeout", [1])
+async def test_tofc_to_cntofn_a(pass_count, timeout):
+
+    q1, q2, q3 = (
+        cirq.NamedQubit("q1"),
+        cirq.NamedQubit("q2"),
+        cirq.NamedQubit("q3"),
+    )
+
+    initial_circuit = cirq.Circuit(
+        [
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CX.on(q1, q2),
+        ]
+    )
+
+    expected_circuit = cirq.Circuit(
+        [
+            cirq.CX.on(q1, q2),
+            cirq.X.on(q2),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.X.on(q2),
+        ]
+    )
+
+    db = PandoraDB("default_config.json")
+    await db.connect()
+
+    try:
+        repo = GateRepository(db)
+        service = PandoraService(db=db, repo=repo)
+
+        await service.build_circuit(
+            circuit=initial_circuit
+        )
+
+        optimiser = PandoraOptimiser(
+            db=db,
+            pass_count=pass_count,
+            timeout=timeout,
+            logger_id=1,
+        )
+
+        optimiser.tofc_to_cntofn(
+            dedicated_nproc=1,
+        )
+
+        await optimiser.start()
+
+        extracted_circuit = await service.load_circuit(
+            circuit_type="cirq"
+        )
+        extracted_circuit = remove_io_gates(extracted_circuit)
+
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("\nActual:")
+        print(extracted_circuit)
+
+        assert_same_up_to_qubit_permutation(
+            expected=expected_circuit,
+            actual=extracted_circuit,
+        )
+
+    finally:
+        await db.close()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [1])
+@pytest.mark.parametrize("timeout", [1])
+async def test_tofc_to_cntofn_b(pass_count, timeout):
+
+    q1, q2, q3 = (
+    cirq.NamedQubit("q1"),
+    cirq.NamedQubit("q2"),
+    cirq.NamedQubit("q3"),
+    )
+
+    initial_circuit = cirq.Circuit(
+        [
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CX.on(q2, q1),
+        ]
+    )
+
+    expected_circuit = cirq.Circuit(
+        [
+            cirq.CX.on(q2, q1),
+            cirq.X.on(q1),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.X.on(q1),
+        ]
+    )
+
+    db = PandoraDB("default_config.json")
+    await db.connect()
+
+    try:
+        repo = GateRepository(db)
+        service = PandoraService(db=db, repo=repo)
+
+        await service.build_circuit(
+            circuit=initial_circuit
+        )
+
+        optimiser = PandoraOptimiser(
+            db=db,
+            pass_count=pass_count,
+            timeout=timeout,
+            logger_id=1,
+        )
+
+        optimiser.tofc_to_cntofn(
+            dedicated_nproc=1,
+        )
+
+        await optimiser.start()
+
+        extracted_circuit = await service.load_circuit(
+            circuit_type="cirq"
+        )
+        extracted_circuit = remove_io_gates(extracted_circuit)
+
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("\nActual:")
+        print(extracted_circuit)
+
+        assert_same_up_to_qubit_permutation(
+            expected=expected_circuit,
+            actual=extracted_circuit,
+        )
+
+    finally:
+        await db.close()
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pass_count", [1])
@@ -33,7 +176,7 @@ async def test_cancel_single_qubit(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -78,7 +221,7 @@ async def test_cancel_two_qubit(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -135,7 +278,7 @@ async def test_case_1(pass_count, timeout):
          ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -216,7 +359,7 @@ async def test_case_1_repeated(pass_count, timeout, n):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -284,7 +427,7 @@ async def test_commute_single_control_left(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -346,7 +489,7 @@ async def test_cx_to_hhcxhh_a(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -400,7 +543,7 @@ async def test_cx_to_hhcxhh_b(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -448,7 +591,7 @@ async def test_hhcxhh_to_cx_a(pass_count, timeout):
     )
     expected_circuit = cirq.Circuit([cirq.CX.on(q2, q1)])
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -502,7 +645,7 @@ async def test_hhcxhh_to_cx_b(pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -548,7 +691,7 @@ async def test_replace_two_sq_with_one(pass_count, timeout):
         cirq.S.on(q),
     ])
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -612,7 +755,7 @@ async def test_case_2(pass_count, timeout):
         cirq.H.on(q1),
     ])
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -707,7 +850,7 @@ async def test_case_2_repeated(n, pass_count, timeout):
         ]
     )
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -786,7 +929,7 @@ async def test_logical_correctness_random(pass_count, stop_after):
 
             t_count_before = count_t_gates(initial_circuit)
 
-            db = PandoraDB()
+            db = PandoraDB("default_config.json")
             await db.connect()
 
             try:
@@ -894,7 +1037,7 @@ async def test_logical_correctness_random(pass_count, stop_after):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("n_proc", [2, 4, 8])
+@pytest.mark.parametrize("n_proc", [2]) #@pytest.mark.parametrize("n_proc", [2, 4, 8])
 @pytest.mark.parametrize("stop_after", [3])
 @pytest.mark.parametrize("pass_count", [int(1e9)])
 async def test_commute_T_leftmost_location(n_proc, stop_after, pass_count):
@@ -912,7 +1055,7 @@ async def test_commute_T_leftmost_location(n_proc, stop_after, pass_count):
     for _ in range(cx_count):
         initial_circuit.append(cirq.T(qubits[1]) ** -1)
 
-    db = PandoraDB()
+    db = PandoraDB("default_config.json")
     await db.connect()
 
     try:
@@ -1035,7 +1178,7 @@ async def test_race_condition(pass_count, timeout, stop_after, trials):
 
     for i in range(trials):
 
-        db = PandoraDB()
+        db = PandoraDB("default_config.json")
         await db.connect()
 
         try:

@@ -15,6 +15,7 @@ dependencies = [
 	"psycopg2-binary",
 	"requests",
 	"gmpy2",
+	"cirq-core",
 	"mqt.qcec",
 	"qiskit_qasm3_import",
 	"pytket",
