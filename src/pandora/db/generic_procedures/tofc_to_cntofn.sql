@@ -59,6 +59,7 @@ begin
                        and get_type_from_link(prev_q1) = toffoli_type 
                        and get_type_from_link(prev_q2) = toffoli_type
                        and get_id_from_link(prev_q1) = get_id_from_link(prev_q2)
+                       and param = 1
                        and ((get_port_from_link(prev_q1) = 0 and get_port_from_link(prev_q2) = 1)
                         or (get_port_from_link(prev_q1) = 1 and get_port_from_link(prev_q2) = 0)
                        )
@@ -71,6 +72,7 @@ begin
                 or toffoli.id is null
                 or cx.type != cx_type
                 or toffoli.type != toffoli_type
+                or cx.param != 1
             then
                 commit;
                 continue;
