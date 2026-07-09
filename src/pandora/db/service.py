@@ -206,6 +206,7 @@ class PandoraService:
             'generic_procedures/hhcxhh_to_cx.sql',
             'generic_procedures/ccx_cx_commute.sql',
             'generic_procedures/ccx_cx_share_2_controls.sql',
+            'generic_procedures/ccx_cx_share_1_tgt_ctrl.sql',
 
             # worker procedures
             'generic_procedures/generate_edge_list.sql',

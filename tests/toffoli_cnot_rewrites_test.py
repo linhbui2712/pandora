@@ -30,6 +30,7 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 
     initial_circuit = cirq.Circuit(
         [
+            cirq.CX.on(q1, q2),
             cirq.CCX.on(q1, q2, q3),
             cirq.CX.on(q1, q2),
         ]
@@ -37,6 +38,7 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 
     expected_circuit = cirq.Circuit(
         [
+            cirq.CX.on(q1, q2),
             cirq.CX.on(q1, q2),
             cirq.X.on(q2),
             cirq.CCX.on(q1, q2, q3),
@@ -103,6 +105,7 @@ async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
         [
             cirq.CCX.on(q1, q2, q3),
             cirq.CX.on(q2, q1),
+            cirq.CCX.on(q1, q2, q3),
         ]
     )
 
@@ -112,6 +115,7 @@ async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
             cirq.X.on(q1),
             cirq.CCX.on(q1, q2, q3),
             cirq.X.on(q1),
+            cirq.CCX.on(q1, q2, q3),
         ]
     )
 
@@ -296,3 +300,74 @@ async def test_ccx_cx_commute_b(pass_count, timeout):
 
     finally:
         await db.close()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [1])
+@pytest.mark.parametrize("timeout", [1])
+async def test_ccx_cx_share_1_tgt_ctrl_a(pass_count, timeout):
+
+    q1, q2, q3, q4 = (
+        cirq.NamedQubit("q1"),
+        cirq.NamedQubit("q2"),
+        cirq.NamedQubit("q3"),
+        cirq.NamedQubit("q4"),
+    )
+
+    initial_circuit = cirq.Circuit(
+        [
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CX.on(q3, q4)
+        ]
+    )
+
+    expected_circuit = cirq.Circuit(
+        [
+            cirq.CX.on(q3, q4),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CCX.on(q1, q2, q4),
+        ]
+    )
+
+    db = PandoraDB("default_config.json")
+    await db.connect()
+
+    try:
+        repo = GateRepository(db)
+        service = PandoraService(db=db, repo=repo)
+
+        await service.build_circuit(
+            circuit=initial_circuit
+        )
+
+        optimiser = PandoraOptimiser(
+            db=db,
+            pass_count=pass_count,
+            timeout=timeout,
+            logger_id=1,
+        )
+
+        optimiser.commute_ccx_share_target_with_cx_control(
+            dedicated_nproc=1,
+        )
+
+        await optimiser.start()
+
+        extracted_circuit = await service.load_circuit(
+            circuit_type="cirq"
+        )
+        extracted_circuit = remove_io_gates(extracted_circuit)
+
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("Actual:")
+        print(extracted_circuit)
+
+        assert_same_up_to_qubit_permutation(
+            expected=expected_circuit,
+            actual=extracted_circuit,
+        )
+
+    finally:
+        await db.close()    

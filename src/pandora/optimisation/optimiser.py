@@ -247,16 +247,25 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
-    def commute_toffoli_with_cnot(
-        self,
-        gate_type: PandoraGateTranslator,
-        gate_param: float = 1.0,
-        dedicated_nproc: int | None = None,
-    ) -> None:
+    def ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call tc_to_cntn("
-                f"{gate_type.value}, {gate_param}, "
-                f"{self.pass_count}, {self.timeout})"
+                f"call ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
+
+    def ccx_cx_commute(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call ccx_cx_commute({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
+    def commute_ccx_share_target_with_cx_control(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call ccx_cx_share_1_tgt_ctrl({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
+    
