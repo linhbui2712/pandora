@@ -35,6 +35,58 @@ AS $$
     SELECT id * 1000 + port * 100 + type;
 $$;
 
+--- Update the previous link of a gate, given the port number.
+CREATE OR REPLACE FUNCTION update_prev_link(
+    gate_id bigint,
+    port bigint,
+    new_link bigint
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF port = 0 THEN
+        UPDATE linked_circuit
+        SET prev_q1 = new_link
+        WHERE id = gate_id;
+    ELSIF port = 1 THEN
+        UPDATE linked_circuit
+        SET prev_q2 = new_link
+        WHERE id = gate_id;
+    ELSE
+        UPDATE linked_circuit
+        SET prev_q3 = new_link
+        WHERE id = gate_id;
+    END IF;
+END;
+$$;
+
+-- Update the next link of a gate, given the port number.
+CREATE OR REPLACE FUNCTION update_next_link(
+    gate_id bigint,
+    port bigint,
+    new_link bigint
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF port = 0 THEN
+        UPDATE linked_circuit
+        SET next_q1 = new_link
+        WHERE id = gate_id;
+    ELSIF port = 1 THEN
+        UPDATE linked_circuit
+        SET next_q2 = new_link
+        WHERE id = gate_id;
+    ELSE
+        UPDATE linked_circuit
+        SET next_q3 = new_link
+        WHERE id = gate_id;
+    END IF;
+END;
+$$;
+
 -- Main circuit representation used by the rewrite procedures.
 -- Each row is a gate and its predecessor/successor connections are stored as encoded links.
 create table IF NOT EXISTS public.linked_circuit
