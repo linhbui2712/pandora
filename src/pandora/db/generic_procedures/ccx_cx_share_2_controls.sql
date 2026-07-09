@@ -38,7 +38,8 @@ declare
     port_nr int;
 
     cx_type smallint;
-    toffoli_type smallint;
+    cxpow_type smallint;
+    toffoli_types smallint[];
     x_type smallint;
 
     cx_next_q1 bigint;
@@ -61,20 +62,19 @@ declare
 begin
     port_nr := 0; -- single qubit gate has a single port with index 0
     start_time := clock_timestamp();
-    select id into cx_type from gate_types where name = 'cxpow';
-    select id into toffoli_type from gate_types where name = 'ccx';
-    select id into x_type from gate_types where name = 'xpow';
+    select id into cx_type from gate_types where name = 'cx';
+    select id into cxpow_type from gate_types where name = 'cxpow';
+    select array_agg(id) into toffoli_types from gate_types where name in ('ccx', 'toffoli');    select id into x_type from gate_types where name = 'xpow';
 
     while pass_count > 0 loop
          -- loop through all CNOT gates that currently fit the pattern we are looking for:
         for gate in
             select * from linked_circuit
                      where
-                       type = cx_type 
-                       and get_type_from_link(prev_q1) = toffoli_type 
-                       and get_type_from_link(prev_q2) = toffoli_type
+                       ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
+                       and get_type_from_link(prev_q1) = any(toffoli_types) 
+                       and get_type_from_link(prev_q2) = any(toffoli_types)
                        and get_id_from_link(prev_q1) = get_id_from_link(prev_q2)
-                       and param = 1
                        and ((get_port_from_link(prev_q1) = 0 and get_port_from_link(prev_q2) = 1)
                         or (get_port_from_link(prev_q1) = 1 and get_port_from_link(prev_q2) = 0)
                        )
@@ -100,9 +100,10 @@ begin
             -- commit and move to the next candidate pair
             if get_id_from_link(cx.prev_q1) != toffoli.id
                 or get_id_from_link(cx.prev_q2) != toffoli.id
-                or cx.type != cx_type
-                or toffoli.type != toffoli_type
-                or cx.param != 1
+                or not ((cx.type = cxpow_type and cx.param = 1) 
+                    or(cx.type = cx_type and cx.param = 0)
+                )
+                or not (toffoli.type = any(toffoli_types))
             then
                 commit;
                 continue;

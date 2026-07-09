@@ -39,7 +39,8 @@ declare
     ctrl_port smallint;
 
     cx_type smallint;
-    toffoli_type smallint;
+    cxpow_type smallint;
+    toffoli_types smallint[];
 
     cx_next_c bigint;
     cx_next_t bigint;
@@ -52,19 +53,19 @@ declare
 
 begin
     start_time := clock_timestamp();
-    select id into cx_type from gate_types where name = 'cxpow';
-    select id into toffoli_type from gate_types where name = 'ccx';
+    select id into cx_type from gate_types where name = 'cx';
+    select id into cxpow_type from gate_types where name = 'cxpow';
+    select array_agg(id) into toffoli_types from gate_types where name in ('ccx', 'toffoli');
 
     while pass_count > 0 loop
          -- loop through all CNOT gates that currently fit the pattern we are looking for:
         for gate in
             select * from linked_circuit
                      where
-                       type = cx_type 
-                       and get_type_from_link(prev_q1) = toffoli_type 
-                       and get_type_from_link(prev_q2) = toffoli_type
+                       ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
+                       and get_type_from_link(prev_q1) = any(toffoli_types) 
+                       and get_type_from_link(prev_q2) = any(toffoli_types)
                        and get_id_from_link(prev_q1) = get_id_from_link(prev_q2)
-                       and param = 1
                        and get_port_from_link(prev_q1) in (0, 1)
                        and get_port_from_link(prev_q2) = 2
                        -- and partition_id = my_partition
@@ -89,9 +90,10 @@ begin
             -- commit and move to the next candidate pair
             if get_id_from_link(cx.prev_q1) != toffoli.id
                 or get_id_from_link(cx.prev_q2) != toffoli.id
-                or cx.type != cx_type
-                or toffoli.type != toffoli_type
-                or cx.param != 1
+                or not ((cx.type = cxpow_type and cx.param = 1) 
+                    or(cx.type = cx_type and cx.param = 0)
+                )
+                or not (toffoli.type = any(toffoli_types))
             then
                 commit;
                 continue;
@@ -105,11 +107,19 @@ begin
             end if;
 
             -- Both gates must still share the same control and target lines
+            ctrl_port := get_port_from_link(cx.prev_q1);
             if not (ctrl_port in (0, 1) and get_port_from_link(cx.prev_q2) = 2)
             then
                 commit;
                 continue;
             end if;
+
+            if ctrl_port = 0 then
+                tof_ctrl_left_link := toffoli.prev_q1;                
+            else
+                tof_ctrl_left_link := toffoli.prev_q2;
+            end if;
+
 
             -- Compute the ids of the neighbours
             cx_next_c_id := get_id_from_link(cx.next_q1);
