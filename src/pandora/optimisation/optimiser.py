@@ -204,6 +204,13 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
+    def ccx_cx_commute(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call ccx_cx_commute({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
     def fuse_single_qubit_gates(
         self,
         gate_types: tuple[
