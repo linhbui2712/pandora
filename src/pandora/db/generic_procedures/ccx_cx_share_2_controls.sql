@@ -1,4 +1,18 @@
-create or replace procedure linked_tofc_to_cntofn(pass_count int, timeout int)
+-- Rule: Toffoli-CNOT commutation (Toffoli shares 2 control lines with CNOT)
+-- Before:
+-- q1: ───@───@───
+--        │   │
+-- q2: ───@───X───
+--        │
+-- q3: ───X───────
+-- After:
+-- q1: ───@───────@───────
+--        │       │
+-- q2: ───X───X───@───X───
+--                │
+-- q3: ───────────X───────
+
+create or replace procedure ccx_cx_share_2_controls(pass_count int, timeout int)
 --- create or replace procedure linked_tc_to_cntn(pass_count int, timeout int, run_nr int)
     language plpgsql
 as

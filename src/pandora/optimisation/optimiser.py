@@ -197,10 +197,10 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
-    def tofc_to_cntofn(self, dedicated_nproc: int | None = None) -> None:
+    def ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call linked_tofc_to_cntofn({self.pass_count}, {self.timeout})"
+                f"call ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
 

@@ -20,7 +20,7 @@ CCX = PandoraGateTranslator.Toffoli
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pass_count", [1])
 @pytest.mark.parametrize("timeout", [1])
-async def test_tofc_to_cntofn_a(pass_count, timeout):
+async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 
     q1, q2, q3 = (
         cirq.NamedQubit("q1"),
@@ -62,7 +62,7 @@ async def test_tofc_to_cntofn_a(pass_count, timeout):
             logger_id=1,
         )
 
-        optimiser.tofc_to_cntofn(
+        optimiser.ccx_cx_share_2_controls(
             dedicated_nproc=1,
         )
 
@@ -77,7 +77,7 @@ async def test_tofc_to_cntofn_a(pass_count, timeout):
         print(initial_circuit)
         print("Expected:")
         print(expected_circuit)
-        print("\nActual:")
+        print("Actual:")
         print(extracted_circuit)
 
         assert_same_up_to_qubit_permutation(
@@ -91,7 +91,7 @@ async def test_tofc_to_cntofn_a(pass_count, timeout):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pass_count", [1])
 @pytest.mark.parametrize("timeout", [1])
-async def test_tofc_to_cntofn_b(pass_count, timeout):
+async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
 
     q1, q2, q3 = (
     cirq.NamedQubit("q1"),
@@ -133,7 +133,7 @@ async def test_tofc_to_cntofn_b(pass_count, timeout):
             logger_id=1,
         )
 
-        optimiser.tofc_to_cntofn(
+        optimiser.ccx_cx_share_2_controls(
             dedicated_nproc=1,
         )
 
