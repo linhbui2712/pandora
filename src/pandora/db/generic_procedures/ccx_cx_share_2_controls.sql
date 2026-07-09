@@ -142,8 +142,8 @@ begin
             end if;
 
             -- Save the two right neighbour links
-            cx_next_q1 = cx.next_q1;
-            cx_next_q2 = cx.next_q2;
+            cx_next_q1 := cx.next_q1;
+            cx_next_q2 := cx.next_q2;
 
             -- Compute new links for the pair and neighbouring gates 
             cx_ctrl := create_link(cx.id, 0, cx.type);
@@ -193,8 +193,10 @@ begin
             -- Update the right_q2 link to point to the new X gate
             if get_port_from_link(cx.next_q2) = 0 then
                 update linked_circuit set prev_q1 = x_2_link where id = cx_next_q2_id;
-            else
+            elsif get_port_from_link(cx.next_q2) = 1 then
                 update linked_circuit set prev_q2 = x_2_link where id = cx_next_q2_id;
+            else
+                update linked_circuit set prev_q3 = x_2_link where id = cx_next_q2_id;
             end if;
             
             commit; -- release the lock
