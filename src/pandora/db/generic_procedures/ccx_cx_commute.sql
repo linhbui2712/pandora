@@ -90,6 +90,9 @@ begin
             -- commit and move to the next candidate pair
             if get_id_from_link(cx.prev_q1) != toffoli.id
                 or get_id_from_link(cx.prev_q2) != toffoli.id
+                or get_port_from_link(cx.prev_q2) != 2
+                or get_id_from_link(toffoli.next_q3) != cx.id
+                or get_port_from_link(toffoli.next_q3) != 1
                 or not ((cx.type = cxpow_type and cx.param = 1) 
                     or(cx.type = cx_type and cx.param = 0)
                 )
@@ -99,27 +102,22 @@ begin
                 continue;
             end if;
 
-            ctrl_port := get_port_from_link(cx.prev_q1);
-            if ctrl_port = 0 then
-                tof_ctrl_left_link := toffoli.prev_q1;                
-            else
-                tof_ctrl_left_link := toffoli.prev_q2;
-            end if;
-
             -- Both gates must still share the same control and target lines
             ctrl_port := get_port_from_link(cx.prev_q1);
-            if not (ctrl_port in (0, 1) and get_port_from_link(cx.prev_q2) = 2)
-            then
+            if ctrl_port = 0 
+                and get_id_from_link(toffoli.next_q1) = cx.id
+                and get_port_from_link(toffoli.next_q1) = 0
+            then 
+                tof_ctrl_left_link := toffoli.prev_q1; 
+            elsif ctrl_port = 1 
+                and get_id_from_link(toffoli.next_q2) = cx.id
+                and get_port_from_link(toffoli.next_q2) = 0
+            then 
+                tof_ctrl_left_link := toffoli.prev_q2; 
+            else
                 commit;
                 continue;
             end if;
-
-            if ctrl_port = 0 then
-                tof_ctrl_left_link := toffoli.prev_q1;                
-            else
-                tof_ctrl_left_link := toffoli.prev_q2;
-            end if;
-
 
             -- Compute the ids of the neighbours
             cx_next_c_id := get_id_from_link(cx.next_q1);

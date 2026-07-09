@@ -100,6 +100,8 @@ begin
             -- commit and move to the next candidate pair
             if get_id_from_link(cx.prev_q1) != toffoli.id
                 or get_id_from_link(cx.prev_q2) != toffoli.id
+                or get_id_from_link(toffoli.next_q1) != cx.id 
+                or get_id_from_link(toffoli.next_q2) != cx.id
                 or not ((cx.type = cxpow_type and cx.param = 1) 
                     or(cx.type = cx_type and cx.param = 0)
                 )
@@ -113,7 +115,7 @@ begin
             if not (
                 (get_port_from_link(cx.prev_q1) = 0 and get_port_from_link(cx.prev_q2) = 1)
                 or (get_port_from_link(cx.prev_q1) = 1 and get_port_from_link(cx.prev_q2) = 0)
-                )
+            )
             then
                 commit;
                 continue;
