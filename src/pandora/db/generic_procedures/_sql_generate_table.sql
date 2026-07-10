@@ -38,18 +38,20 @@ $$;
 --- Update the previous link of a gate, given the port number.
 CREATE OR REPLACE FUNCTION update_prev_link(
     gate_id bigint,
-    port bigint,
+    link_port bigint,
     new_link bigint
 )
 RETURNS void
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    port_connect smallint := get_port_from_link(link_port);
 BEGIN
-    IF port = 0 THEN
+    IF port_connect = 0 THEN
         UPDATE linked_circuit
         SET prev_q1 = new_link
         WHERE id = gate_id;
-    ELSIF port = 1 THEN
+    ELSIF port_connect = 1 THEN
         UPDATE linked_circuit
         SET prev_q2 = new_link
         WHERE id = gate_id;
@@ -64,18 +66,20 @@ $$;
 -- Update the next link of a gate, given the port number.
 CREATE OR REPLACE FUNCTION update_next_link(
     gate_id bigint,
-    port bigint,
+    link_port bigint,
     new_link bigint
 )
 RETURNS void
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    port_connect smallint := get_port_from_link(link_port);
 BEGIN
-    IF port = 0 THEN
+    IF port_connect = 0 THEN
         UPDATE linked_circuit
         SET next_q1 = new_link
         WHERE id = gate_id;
-    ELSIF port = 1 THEN
+    ELSIF port_connect = 1 THEN
         UPDATE linked_circuit
         SET next_q2 = new_link
         WHERE id = gate_id;

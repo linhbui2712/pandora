@@ -153,38 +153,11 @@ begin
             tof_tgt := create_link(toffoli.id, 2, toffoli.type);
 
             -- Update links of the left and right neighbours 
-            if get_port_from_link(tof_ctrl_left_link) = 0 then
-                update linked_circuit set next_q1 = cx_ctrl where id = tof_prev_c_id;
-            elsif get_port_from_link(tof_ctrl_left_link) = 1 then
-                update linked_circuit set next_q2 = cx_ctrl where id = tof_prev_c_id;
-            else
-                update linked_circuit set next_q3 = cx_ctrl where id = tof_prev_c_id;
-            end if;
+            perform update_next_link(tof_prev_c_id, tof_ctrl_left_link, cx_ctrl);
+            perform update_next_link(tof_prev_t_id, toffoli.prev_q3, cx_tgt);
+            perform update_prev_link(cx_next_c_id, cx.next_q1, tof_ctrl);
+            perform update_prev_link(cx_next_t_id, cx.next_q2, tof_tgt);    
 
-            if get_port_from_link(toffoli.prev_q3) = 0 then
-                update linked_circuit set next_q1 = cx_tgt where id = tof_prev_t_id;
-            elsif get_port_from_link(toffoli.prev_q3) = 1 then
-                update linked_circuit set next_q2 = cx_tgt where id = tof_prev_t_id;
-            else
-                update linked_circuit set next_q3 = cx_tgt where id = tof_prev_t_id;
-            end if;
-
-            if get_port_from_link(cx.next_q1) = 0 then
-                update linked_circuit set prev_q1 = tof_ctrl where id = cx_next_c_id;
-            elsif get_port_from_link(cx.next_q1) = 1 then
-                update linked_circuit set prev_q2 = tof_ctrl where id = cx_next_c_id;
-            else
-                update linked_circuit set prev_q3 = tof_ctrl where id = cx_next_c_id;
-            end if;
-
-            if get_port_from_link(cx.next_q2) = 0 then
-                update linked_circuit set prev_q1 = tof_tgt where id = cx_next_t_id;
-            elsif get_port_from_link(cx.next_q2) = 1 then
-                update linked_circuit set prev_q2 = tof_tgt where id = cx_next_t_id;
-            else
-                update linked_circuit set prev_q3 = tof_tgt where id = cx_next_t_id;
-            end if;  
-                                                          
             -- Update Toffoli and CNOT 
             update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (tof_ctrl_left_link, toffoli.prev_q3, tof_ctrl, tof_tgt) where id = cx.id;
             

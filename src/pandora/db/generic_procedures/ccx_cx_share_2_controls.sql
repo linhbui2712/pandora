@@ -148,59 +148,31 @@ begin
             cx_next_q1 := cx.next_q1;
             cx_next_q2 := cx.next_q2;
 
-            -- Compute new links for the pair and neighbouring gates 
+            -- Compute links to the Toffoli and CNOT gates
             cx_ctrl := create_link(cx.id, 0, cx.type);
             cx_tgt  := create_link(cx.id, 1, cx.type);
             tof_ctrl_1 := create_link(toffoli.id, 0, toffoli.type);
             tof_ctrl_2 := create_link(toffoli.id, 1, toffoli.type);
 
-            -- Update links of the left and right neighbours (exept for right_q2, which will be updated by the new X gate)
-            if get_port_from_link(toffoli.prev_q1) = 0 then
-                update linked_circuit set next_q1 = cx_ctrl where id = tof_prev_q1_id;
-            elsif get_port_from_link(toffoli.prev_q1) = 1 then
-                update linked_circuit set next_q2 = cx_ctrl where id = tof_prev_q1_id;
-            else
-                update linked_circuit set next_q3 = cx_ctrl where id = tof_prev_q1_id;
-            end if;
-
-            if get_port_from_link(toffoli.prev_q2) = 0 then
-                update linked_circuit set next_q1 = cx_tgt where id = tof_prev_q2_id;
-            elsif get_port_from_link(toffoli.prev_q2) = 1 then
-                update linked_circuit set next_q2 = cx_tgt where id = tof_prev_q2_id;
-            else
-                update linked_circuit set next_q3 = cx_tgt where id = tof_prev_q2_id;
-            end if;
-
-            if get_port_from_link(cx.next_q1) = 0 then
-                update linked_circuit set prev_q1 = tof_ctrl_1 where id = cx_next_q1_id;
-            elsif get_port_from_link(cx.next_q1) = 1 then
-                update linked_circuit set prev_q2 = tof_ctrl_1 where id = cx_next_q1_id;
-            else
-                update linked_circuit set prev_q3 = tof_ctrl_1 where id = cx_next_q1_id;
-            end if;
-            
-           --- Insert 2 NOT gates after CNOT and after Toffolli
+            --- Insert 2 NOT gates after CNOT and after Toffolli
             insert into linked_circuit(prev_q1, type, next_q1, param, label) values (cx_tgt, x_type, tof_ctrl_2, 1, cx.label)
                                                           returning id into x_1;
             insert into linked_circuit(prev_q1, type, next_q1, param, label) values (tof_ctrl_2, x_type, cx.next_q2, 1, cx.label)
                                                           returning id into x_2;       
                                                           
-            -- Create links for Toffoli and CNOT
+            -- Create links to the new X gates
             x_1_link := create_link(x_1, port_nr, x_type);
             x_2_link := create_link(x_2, port_nr, x_type);
+
+            -- Update links of the left and right neighbours 
+            perform update_next_link(tof_prev_q1_id, toffoli.prev_q1, cx_ctrl);
+            perform update_next_link(tof_prev_q2_id, toffoli.prev_q2, cx_tgt);
+            perform update_prev_link(cx_next_q1_id, cx.next_q1, tof_ctrl_1);
+            perform update_prev_link(cx_next_q2_id, cx.next_q2, x_2_link);
 
             -- Update Toffoli and CNOT 
             update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (toffoli.prev_q1, toffoli.prev_q2, tof_ctrl_1, x_1_link) where id = cx.id; 
             update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_ctrl, x_1_link, cx_next_q1, x_2_link) where id = toffoli.id;
-
-            -- Update the right_q2 link to point to the new X gate
-            if get_port_from_link(cx.next_q2) = 0 then
-                update linked_circuit set prev_q1 = x_2_link where id = cx_next_q2_id;
-            elsif get_port_from_link(cx.next_q2) = 1 then
-                update linked_circuit set prev_q2 = x_2_link where id = cx_next_q2_id;
-            else
-                update linked_circuit set prev_q3 = x_2_link where id = cx_next_q2_id;
-            end if;
             
             commit; -- release the lock
 

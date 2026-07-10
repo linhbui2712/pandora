@@ -1,7 +1,7 @@
 -- Rule: Toffoli-CNOT commutation (sharing 1 qubit: Toffoli target = CNOT control)
 -- Before:
 -- q1: ───@───────
-       │
+--        │
 -- q2: ───@───────
 --        │
 -- q3: ───X───@───
@@ -22,7 +22,7 @@ create or replace procedure ccx_cx_share_1_tgt_ctrl(pass_count int, timeout int)
 as
 $$
 declare
--- Gates
+    -- Gates
     toffoli record;
     cx record;
     gate record;
@@ -156,11 +156,11 @@ begin
             new_tof_tgt := create_link(new_tof_id, 2, new_tof_type);
 
             -- Update links of the left and right neighbours 
-            perform update_next_link(left_q3.id, get_port_from_link(toffoli.prev_q3), cx_ctrl);
-            perform update_prev_link(right_q1.id, get_port_from_link(toffoli.next_q1), new_tof_ctrl_1);
-            perform update_prev_link(right_q2.id, get_port_from_link(toffoli.next_q2), new_tof_ctrl_2);
-            perform update_prev_link(right_q3.id, get_port_from_link(cx.next_q1), tof_tgt);
-            perform update_prev_link(right_q4.id, get_port_from_link(cx.next_q2), new_tof_tgt);
+            perform update_next_link(left_q3.id, toffoli.prev_q3, cx_ctrl);
+            perform update_prev_link(right_q1.id, toffoli.next_q1, new_tof_ctrl_1);
+            perform update_prev_link(right_q2.id, toffoli.next_q2, new_tof_ctrl_2);
+            perform update_prev_link(right_q3.id, cx.next_q1, tof_tgt);
+            perform update_prev_link(right_q4.id, cx.next_q2, new_tof_tgt);
 
             -- Update the target paor Toffoli and CNOT 
             cx_right_q1 := cx.next_q1;
