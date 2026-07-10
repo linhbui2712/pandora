@@ -36,7 +36,7 @@ declare
 
     start_time timestamp;
 
-    ctrl_port smallint;
+    ctrl_port int;
 
     cx_type smallint;
     cxpow_type smallint;
