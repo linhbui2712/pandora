@@ -45,7 +45,7 @@ RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    port_connect smallint := get_port_from_link(link_port);
+    port_connect int := get_port_from_link(link_port);
 BEGIN
     IF port_connect = 0 THEN
         UPDATE linked_circuit
@@ -73,7 +73,7 @@ RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    port_connect smallint := get_port_from_link(link_port);
+    port_connect int := get_port_from_link(link_port);
 BEGIN
     IF port_connect = 0 THEN
         UPDATE linked_circuit
