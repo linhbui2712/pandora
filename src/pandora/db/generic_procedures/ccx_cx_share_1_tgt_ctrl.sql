@@ -162,7 +162,7 @@ begin
             perform update_prev_link(right_q3.id, cx.next_q1, tof_tgt);
             perform update_prev_link(right_q4.id, cx.next_q2, new_tof_tgt);
 
-            -- Update the target paor Toffoli and CNOT 
+            -- Update the target pair Toffoli and CNOT 
             cx_right_q1 := cx.next_q1;
             update linked_circuit set (prev_q1, next_q1, next_q2) = (toffoli.prev_q3, tof_tgt, new_tof_tgt) where id = cx.id; 
             update linked_circuit set (prev_q3, next_q1, next_q2, next_q3) = (cx_ctrl, new_tof_ctrl_1, new_tof_ctrl_2, cx_right_q1) where id = toffoli.id;
