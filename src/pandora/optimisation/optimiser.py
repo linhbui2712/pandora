@@ -267,5 +267,12 @@ class PandoraOptimiser:
                 f"call ccx_cx_share_1_tgt_ctrl({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
+    
+    def commute_ccx_share_control_with_cx_target(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call ccx_cx_share_1_ctrl_tgt({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
 
     
