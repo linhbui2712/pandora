@@ -21,13 +21,16 @@ declare
     toffoli record;
     cx record;
 
-    tof_prev_q1_id bigint;
-    tof_prev_q2_id bigint;
+    tof_ctrl_left_1 bigint; -- prev link of CNOT control to Toffoli control 
+    tof_ctrl_left_2 bigint; -- prev link of CNOT target to Toffoli control
+
+    tof_prev_id_1 bigint;
+    tof_prev_id_2 bigint;
     cx_next_q1_id bigint;
     cx_next_q2_id bigint;
 
-    left_q1 record;
-    left_q2 record;
+    left_1 record; -- left neighbour of Toffoli control that is connected to CNOT control
+    left_2 record; -- left neighbour of Toffoli control that is connected to CNOT target
     right_q1 record;
     right_q2 record;
 
@@ -111,12 +114,27 @@ begin
                 continue;
             end if;
 
-            -- Both CNOT links must still connect to the control ports of the toffoli
-            if not (
-                (get_port_from_link(cx.prev_q1) = 0 and get_port_from_link(cx.prev_q2) = 1)
-                or (get_port_from_link(cx.prev_q1) = 1 and get_port_from_link(cx.prev_q2) = 0)
-            )
+            -- Recheck the ports of the two gates to ensure they match the pattern we are looking for
+            if get_port_from_link(cx.prev_q1) = 0 
+                and get_port_from_link(cx.prev_q2) = 1 
+                and get_port_from_link(toffoli.next_q1) = 0
+                and get_port_from_link(toffoli.next_q2) = 1
             then
+                tof_ctrl_left_1 := toffoli.prev_q1; 
+                tof_ctrl_left_2 := toffoli.prev_q2;
+                cx_ctrl_port := 0;
+                cx_tgt_port := 1;
+            elsif
+                get_port_from_link(cx.prev_q1) = 1 
+                and get_port_from_link(cx.prev_q2) = 0
+                and get_port_from_link(toffoli.next_q1) = 1
+                and get_port_from_link(toffoli.next_q2) = 0
+            then
+                tof_ctrl_left_1 := toffoli.prev_q2; 
+                tof_ctrl_left_2 := toffoli.prev_q1;
+                cx_ctrl_port := 1;
+                cx_tgt_port := 0;
+            else
                 commit;
                 continue;
             end if;
@@ -124,19 +142,18 @@ begin
             -- Compute the ids of the neighbours
             cx_next_q1_id := get_id_from_link(cx.next_q1);
             cx_next_q2_id := get_id_from_link(cx.next_q2);
-
-            tof_prev_q1_id := get_id_from_link(toffoli.prev_q1);
-            tof_prev_q2_id := get_id_from_link(toffoli.prev_q2);
-        
+            tof_prev_id_1 := get_id_from_link(tof_ctrl_left_1);
+            tof_prev_id_2 := get_id_from_link(tof_ctrl_left_2);
+    
             -- Attempt to lock the neighbours of the pair (left of first gate and right of second gate)
-            select * into left_q1 from linked_circuit where id=tof_prev_q1_id for update skip locked;
-            select * into left_q2 from linked_circuit where id=tof_prev_q2_id for update skip locked;
+            select * into left_1 from linked_circuit where id=tof_prev_id_1 for update skip locked;
+            select * into left_2 from linked_circuit where id=tof_prev_id_2 for update skip locked;
             select * into right_q1 from linked_circuit where id=cx_next_q1_id for update skip locked;
             select * into right_q2 from linked_circuit where id=cx_next_q2_id for update skip locked;
 
             -- If locking the neighbours failed, commit and move to the next candidate pair
-            if left_q1.id is null
-                or left_q2.id is null
+            if left_1.id is null
+                or left_2.id is null
                 or right_q1.id is null
                 or right_q2.id is null
             then
@@ -151,8 +168,8 @@ begin
             -- Compute links to the Toffoli and CNOT gates
             cx_ctrl := create_link(cx.id, 0, cx.type);
             cx_tgt  := create_link(cx.id, 1, cx.type);
-            tof_ctrl_1 := create_link(toffoli.id, 0, toffoli.type);
-            tof_ctrl_2 := create_link(toffoli.id, 1, toffoli.type);
+            tof_ctrl_1 := create_link(toffoli.id, cx_ctrl_port, toffoli.type);
+            tof_ctrl_2 := create_link(toffoli.id, cx_tgt_port, toffoli.type);
 
             --- Insert 2 NOT gates after CNOT and after Toffolli
             insert into linked_circuit(prev_q1, type, next_q1, param, label) values (cx_tgt, x_type, tof_ctrl_2, 1, cx.label)
@@ -165,14 +182,18 @@ begin
             x_2_link := create_link(x_2, port_nr, x_type);
 
             -- Update links of the left and right neighbours 
-            perform update_next_link(tof_prev_q1_id, toffoli.prev_q1, cx_ctrl);
-            perform update_next_link(tof_prev_q2_id, toffoli.prev_q2, cx_tgt);
+            perform update_next_link(tof_prev_id_1, toffoli.prev_q1, cx_ctrl);
+            perform update_next_link(tof_prev_id_2 , toffoli.prev_q2, cx_tgt);
             perform update_prev_link(cx_next_q1_id, cx.next_q1, tof_ctrl_1);
             perform update_prev_link(cx_next_q2_id, cx.next_q2, x_2_link);
 
             -- Update Toffoli and CNOT 
-            update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (toffoli.prev_q1, toffoli.prev_q2, tof_ctrl_1, x_1_link) where id = cx.id; 
-            update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_ctrl, x_1_link, cx_next_q1, x_2_link) where id = toffoli.id;
+            update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (tof_ctrl_left_1, tof_ctrl_left_2, tof_ctrl_1, x_1_link) where id = cx.id; 
+            if cx_ctrl_port = 0 then
+                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_ctrl, cx_tgt, cx_next_q1, x_2_link) where id = toffoli.id;
+            else
+                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_tgt, cx_ctrl, x_2_link, cx_next_q2) where id = toffoli.id;
+            end if;
             
             commit; -- release the lock
 

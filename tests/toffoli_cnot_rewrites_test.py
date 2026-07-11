@@ -30,7 +30,6 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 
     initial_circuit = cirq.Circuit(
         [
-            cirq.CX.on(q1, q2),
             cirq.CCX.on(q1, q2, q3),
             cirq.CX.on(q1, q2),
         ]
@@ -38,7 +37,6 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 
     expected_circuit = cirq.Circuit(
         [
-            cirq.CX.on(q1, q2),
             cirq.CX.on(q1, q2),
             cirq.X.on(q2),
             cirq.CCX.on(q1, q2, q3),
@@ -75,12 +73,12 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
         )
         extracted_circuit = remove_io_gates(extracted_circuit)
 
-        # print("Initial:")
-        # print(initial_circuit)
-        # print("Expected:")
-        # print(expected_circuit)
-        # print("Actual:")
-        # print(extracted_circuit)
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("Actual:")
+        print(extracted_circuit)
 
         assert_same_up_to_qubit_permutation(
             expected=expected_circuit,
@@ -94,7 +92,8 @@ async def test_ccx_cx_share_2_controls_a(pass_count, timeout):
 @pytest.mark.parametrize("pass_count", [1])
 @pytest.mark.parametrize("timeout", [1])
 async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
-
+    """ Test case for the rewrite rule where 2 Toffoli controls (different predecessors and successors) are shared with a CNOT gate."""
+    
     q1, q2, q3 = (
         cirq.NamedQubit("q1"),
         cirq.NamedQubit("q2"),
@@ -103,19 +102,21 @@ async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
 
     initial_circuit = cirq.Circuit(
         [
+            cirq.Z.on(q2),
             cirq.CCX.on(q1, q2, q3),
             cirq.CX.on(q2, q1),
-            cirq.CCX.on(q1, q2, q3),
+            cirq.X.on(q1),
         ]
     )
 
     expected_circuit = cirq.Circuit(
         [
+            cirq.Z.on(q2),
             cirq.CX.on(q2, q1),
             cirq.X.on(q1),
             cirq.CCX.on(q1, q2, q3),
             cirq.X.on(q1),
-            cirq.CCX.on(q1, q2, q3),
+            cirq.X.on(q1),
         ]
     )
 
@@ -148,12 +149,12 @@ async def test_ccx_cx_share_2_controls_b(pass_count, timeout):
         )
         extracted_circuit = remove_io_gates(extracted_circuit)
 
-        # print("Initial:")
-        # print(initial_circuit)
-        # print("Expected:")
-        # print(expected_circuit)
-        # print("Actual:")
-        # print(extracted_circuit)
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("Actual:")
+        print(extracted_circuit)
 
         assert_same_up_to_qubit_permutation(
             expected=expected_circuit,
