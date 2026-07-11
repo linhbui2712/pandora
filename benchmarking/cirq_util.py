@@ -84,15 +84,15 @@ def add_two_hadamards(circuit, qubits):
 
 
 def add_t_t_dag(circuit, qubits):
-    """Adds two Hadamard gates to a randomly chosen qubit of
+    """Adds two T-gates to a randomly chosen qubit of
     the input circuit.
 
     Args:
-        circuit (cirq.Circuit): circuit to which Hadamards are added
+        circuit (cirq.Circuit): circuit to which T-gates are added
         qubits (list(cirq.LineQubit)): qubits of the circuit
 
     Returns:
-        mutated_circuit (cirq.Circuit): circuit with added Hadamards
+        mutated_circuit (cirq.Circuit): circuit with added T-gates
     """
     mutated_circuit = circuit.unfreeze(copy=True)
     random_qubit = random.choice(qubits)
@@ -101,15 +101,15 @@ def add_t_t_dag(circuit, qubits):
 
 
 def add_t_cx(circuit, qubits):
-    """Adds two Hadamard gates to a randomly chosen qubit of
+    """Adds a T-gate and a CNOT-gate to a randomly chosen pair of qubits of
     the input circuit.
 
     Args:
-        circuit (cirq.Circuit): circuit to which Hadamards are added
+        circuit (cirq.Circuit): circuit to which T and CNOT gates are added
         qubits (list(cirq.LineQubit)): qubits of the circuit
 
     Returns:
-        mutated_circuit (cirq.Circuit): circuit with added Hadamards
+        mutated_circuit (cirq.Circuit): circuit with added gates
     """
     mutated_circuit = circuit.unfreeze(copy=True)
     control_qubit, target_qubit = random.sample(qubits, 2)
@@ -118,15 +118,15 @@ def add_t_cx(circuit, qubits):
 
 
 def add_cx_t(circuit, qubits):
-    """Adds two Hadamard gates to a randomly chosen qubit of
+    """Adds a CNOT-gate and a T-gate to a randomly chosen pair of qubits of
     the input circuit.
 
     Args:
-        circuit (cirq.Circuit): circuit to which Hadamards are added
+        circuit (cirq.Circuit): circuit to which CNOT and T gates are added
         qubits (list(cirq.LineQubit)): qubits of the circuit
 
     Returns:
-        mutated_circuit (cirq.Circuit): circuit with added Hadamards
+        mutated_circuit (cirq.Circuit): circuit with added gates
     """
     mutated_circuit = circuit.unfreeze(copy=True)
     control_qubit, target_qubit = random.sample(qubits, 2)
@@ -153,23 +153,22 @@ def add_two_cnots(circuit, qubits):
 
 
 def add_toffoli(circuit, qubits):
-    """Adds a two CNOT-gates to a randomly chosen pair of qubits of
+    """Adds a Toffoli-gate to a randomly chosen triplet of qubits of
     the input circuit.
 
     Args:
-        circuit (cirq.Circuit): circuit to which 2 CNOTs are added
+        circuit (cirq.Circuit): circuit to which a Toffoli is added
         qubits (list(cirq.LineQubit)): qubits of the circuit
 
     Returns:
-        mutated_circuit (cirq.Circuit): circuit with added CNOTs
+        mutated_circuit (cirq.Circuit): circuit with added Toffoli
     """
     mutated_circuit = circuit.unfreeze(copy=True)
-    # control_qubit_1, control_qubit_2, target_qubit = random.sample(qubits, 3)
-    control_qubit_1, control_qubit_2, target_qubit = qubits[0], qubits[1], qubits[2]
+    control_qubit_1, control_qubit_2, target_qubit = random.sample(qubits, 3)
+    # control_qubit_1, control_qubit_2, target_qubit = qubits[0], qubits[1], qubits[2]
     mutated_circuit.append(cirq.CCNOT(control_qubit_1, control_qubit_2, target_qubit))
 
     return mutated_circuit
-
 
 def add_base_change(circuit, qubits):
     """Adds a CNOT-gate and four surrounding Hadamards to a randomly chosen pair of qubits of
@@ -187,6 +186,108 @@ def add_base_change(circuit, qubits):
     mutated_circuit.append([cirq.H(control_qubit), cirq.H(target_qubit),
                             cirq.CNOT(control_qubit, target_qubit),
                             cirq.H(control_qubit), cirq.H(target_qubit)])
+    return mutated_circuit
+
+def add_generic_toffoli_cnot(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to randomly chosen qubits of
+    the input circuit.
+
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit = random.sample(qubits, 3)
+    cx_control_qubit, cx_target_qubit = random.sample(qubits, 2)
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit
+
+def add_ccx_cx_ctrl_tgt_share_ctrl_tgt(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to a randomly chosen triplet of qubits of
+    the input circuit, where one Toffoli control qubit and target qubit are the same as 
+    the CNOT control and target qubits, respectively.
+
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit = random.sample(qubits, 3)
+    cx_control_qubit = random.choice([ccx_control_qubit_1, ccx_control_qubit_2])
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, ccx_target_qubit)])
+    return mutated_circuit
+
+def add_ccx_cx_ctrls_share_ctrl_tgt(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to a randomly chosen triplet of qubits of
+    the input circuit, where the Toffoli control qubits are the same as 
+    the CNOT control and target qubits.
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit = random.sample(qubits, 3)
+    cx_control_qubit, cx_target_qubit = random.sample([ccx_control_qubit_1, ccx_control_qubit_2], 2)
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit
+
+def add_ccx_cx_tgt_share_ctrl(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to four randomly chosen qubits of
+    the input circuit, where the Toffoli target qubit and CNOT control qubit are the same.
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit, cx_target_qubit = random.sample(qubits, 4)
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(ccx_target_qubit, cx_target_qubit)])
+    return mutated_circuit
+
+def add_ccx_cx_ctrl_share_tgt(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to four randomly chosen qubits of
+    the input circuit, where one Toffoli control qubit and CNOT target qubit are the same.
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit, cx_control_qubit = random.sample(qubits, 4)
+    cx_target_qubit = random.choice([ccx_control_qubit_1, ccx_control_qubit_2])
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit
+
+def add_two_nots(circuit, qubits):
+    """Adds two NOT gates to a randomly chosen qubit of the input circuit.
+
+    Args:
+        circuit (cirq.Circuit): circuit to which X and CNOT gates are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+    mutated_circuit = circuit.unfreeze(copy=True)
+    random_qubit = random.choice(qubits)
+    mutated_circuit.append([cirq.X(random_qubit), cirq.X(random_qubit)])
     return mutated_circuit
 
 
