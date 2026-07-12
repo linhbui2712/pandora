@@ -16,8 +16,7 @@
 --        │       │
 -- q4: ───@───────@───
 
-create or replace procedure ccx_cx_share_1_ctrl_tgt(pass_count int, timeout int)
---- create or replace procedure ccx_cx_commute(pass_count int, timeout int, run_nr int)
+create or replace procedure commute_ccx_cx_share_1_ctrl_tgt(pass_count int, timeout int)
     language plpgsql
 as
 $$

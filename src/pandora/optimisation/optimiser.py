@@ -247,32 +247,38 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
-    def ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
+    def commute_ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
+                f"call commute_ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
 
-    def ccx_cx_commute(self, dedicated_nproc: int | None = None) -> None:
+    def rewrite_ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call ccx_cx_commute({self.pass_count}, {self.timeout})"
+                f"call rewrite_ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
+    def commute_ccx_cx_match_ctrl_tgt(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call commute_ccx_cx_match_ctrl_tgt({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
 
     def commute_ccx_share_target_with_cx_control(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call ccx_cx_share_1_tgt_ctrl({self.pass_count}, {self.timeout})"
+                f"call commute_ccx_cx_share_1_tgt_ctrl({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
     
     def commute_ccx_share_control_with_cx_target(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (
-                f"call ccx_cx_share_1_ctrl_tgt({self.pass_count}, {self.timeout})"
+                f"call commute_ccx_cx_share_1_ctrl_tgt({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
 
-    

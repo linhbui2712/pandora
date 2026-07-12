@@ -204,10 +204,11 @@ class PandoraService:
             'generic_procedures/toffoli_decomposition.sql',
             'generic_procedures/cx_to_hhcxhh.sql',
             'generic_procedures/hhcxhh_to_cx.sql',
-            'generic_procedures/ccx_cx_commute.sql',
-            'generic_procedures/ccx_cx_share_2_controls.sql',
-            'generic_procedures/ccx_cx_share_1_tgt_ctrl.sql',
-            'generic_procedures/ccx_cx_share_1_ctrl_tgt.sql',
+            'generic_procedures/commute_ccx_cx_match_ctrl_tgt.sql',
+            'generic_procedures/commute_ccx_cx_share_2_controls.sql',
+            'generic_procedures/rewrite_ccx_cx_share_2_controls.sql',
+            'generic_procedures/commute_ccx_cx_share_1_tgt_ctrl.sql',
+            'generic_procedures/commute_ccx_cx_share_1_ctrl_tgt.sql',
 
             # worker procedures
             'generic_procedures/generate_edge_list.sql',

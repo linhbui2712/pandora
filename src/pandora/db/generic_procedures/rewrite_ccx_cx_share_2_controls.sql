@@ -1,4 +1,4 @@
--- Rule: Toffoli-CNOT commutation (Toffoli shares 2 control lines with CNOT)
+-- Rule: Toffoli-CNOT commutation (Toffoli shares 2 control qubits with CNOT)
 -- Before:
 -- q1: ───@───@───
 --        │   │
@@ -12,7 +12,7 @@
 --                │
 -- q3: ───────────X───────
 
-create or replace procedure ccx_cx_share_2_controls(pass_count int, timeout int)
+create or replace procedure rewrite_ccx_cx_share_2_controls(pass_count int, timeout int)
 --- create or replace procedure linked_tc_to_cntn(pass_count int, timeout int, run_nr int)
     language plpgsql
 as
@@ -67,7 +67,8 @@ begin
     start_time := clock_timestamp();
     select id into cx_type from gate_types where name = 'cx';
     select id into cxpow_type from gate_types where name = 'cxpow';
-    select array_agg(id) into toffoli_types from gate_types where name in ('ccx', 'toffoli');    select id into x_type from gate_types where name = 'xpow';
+    select array_agg(id) into toffoli_types from gate_types where name in ('ccx', 'toffoli');    
+    select id into x_type from gate_types where name = 'xpow';
 
     while pass_count > 0 loop
          -- loop through all CNOT gates that currently fit the pattern we are looking for:
@@ -105,9 +106,6 @@ begin
                 or get_id_from_link(cx.prev_q2) != toffoli.id
                 or get_id_from_link(toffoli.next_q1) != cx.id 
                 or get_id_from_link(toffoli.next_q2) != cx.id
-                or not ((cx.type = cxpow_type and cx.param = 1) 
-                    or(cx.type = cx_type and cx.param = 0)
-                )
                 or not (toffoli.type = any(toffoli_types))
             then
                 commit;
