@@ -210,6 +210,7 @@ class PandoraService:
             'generic_procedures/commute_ccx_cx_share_1_tgt_ctrl.sql',
             'generic_procedures/commute_ccx_cx_share_1_ctrl_tgt.sql',
             'generic_procedures/commute_ccx_cx_share_1_ctrl.sql',
+            'generic_procedures/commute_ccx_cx_share_1_tgt.sql',
 
             # worker procedures
             'generic_procedures/generate_edge_list.sql',
