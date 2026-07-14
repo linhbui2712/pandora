@@ -26,7 +26,7 @@ class PandoraOptimiser:
         self.db = db
         self.timeout = timeout
         self.pass_count = pass_count
-        self.logger_id = logger_id
+        self.logger_id = logger_id # to distinguish the statistics produced by different runs (eg., using different rule combinations) of the optimizer.
         self.max_concurrency = max_concurrency or 32
 
         self._thread_proc: list[str] = []
@@ -36,7 +36,10 @@ class PandoraOptimiser:
             await conn.execute(query)
 
     async def _execute_many(self, queries: list[str]) -> None:
-        sem = asyncio.Semaphore(self.max_concurrency)
+        """
+        Execute multiple queries concurrently.
+        """
+        sem = asyncio.Semaphore(self.max_concurrency) # Limit the number of concurrent (await) queries to avoid overwhelming the database.
 
         async def _run_one(query: str):
             async with sem:
@@ -197,20 +200,6 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
-    def ccx_cx_share_2_controls(self, dedicated_nproc: int | None = None) -> None:
-        for _ in range(dedicated_nproc or 0):
-            stored_procedure = (
-                f"call ccx_cx_share_2_controls({self.pass_count}, {self.timeout})"
-            )
-            self._call_thread_proc(stored_procedure)
-
-    def ccx_cx_commute(self, dedicated_nproc: int | None = None) -> None:
-        for _ in range(dedicated_nproc or 0):
-            stored_procedure = (
-                f"call ccx_cx_commute({self.pass_count}, {self.timeout})"
-            )
-            self._call_thread_proc(stored_procedure)
-
     def fuse_single_qubit_gates(
         self,
         gate_types: tuple[
@@ -281,4 +270,9 @@ class PandoraOptimiser:
                 f"call commute_ccx_cx_share_1_ctrl_tgt({self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
-
+    def commute_ccx_cx_share_2_mixed(self, dedicated_nproc: int | None = None) -> None:
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call commute_ccx_cx_share_2_mixed({self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)

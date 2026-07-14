@@ -1,4 +1,4 @@
--- Rule: Toffoli-CNOT commutation (Toffoli shares 2 control qubits with CNOT)
+-- Toffoli-CNOT rewrite rule
 -- Before:
 -- q1: ───@───@───
 --        │   │
@@ -13,7 +13,7 @@
 -- q3: ───────────X───────
 
 create or replace procedure rewrite_ccx_cx_share_2_controls(pass_count int, timeout int)
---- create or replace procedure linked_tc_to_cntn(pass_count int, timeout int, run_nr int)
+--- create or replace procedure rewrite_ccx_cx_share_2_controls(pass_count int, timeout int, run_nr int)
     language plpgsql
 as
 $$
