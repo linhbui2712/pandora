@@ -87,6 +87,7 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q2) = any(toffoli_types) 
                        and get_port_from_link(prev_q2) in (0, 1)
+                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -114,6 +115,7 @@ begin
                     or (cx.type = cx_type and cx.param = 0)
                 )
                 or get_id_from_link(cx.prev_q2) != toffoli.id 
+                or get_id_from_link(cx.prev_q1) = toffoli.id
                 or not (toffoli.type = any(toffoli_types))
             then
                 commit;
@@ -123,12 +125,16 @@ begin
             tof_port_connected := get_port_from_link(cx.prev_q2);
             if tof_port_connected = 0
                 and get_id_from_link(toffoli.next_q1) = cx.id
+                and get_id_from_link(toffoli.next_q2) != cx.id
+                and get_id_from_link(toffoli.next_q3) != cx.id
                 and get_port_from_link(toffoli.next_q1) = 1
             then 
                 tof_ctrl_prev := toffoli.prev_q1;
                 tof_ctrl_next := toffoli.next_q2;
             elsif tof_port_connected = 1
                 and get_id_from_link(toffoli.next_q2) = cx.id
+                and get_id_from_link(toffoli.next_q1) != cx.id
+                and get_id_from_link(toffoli.next_q3) != cx.id
                 and get_port_from_link(toffoli.next_q2) = 1
             then 
                 tof_ctrl_prev := toffoli.prev_q2;

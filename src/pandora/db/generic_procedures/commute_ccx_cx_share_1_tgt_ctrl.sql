@@ -78,6 +78,7 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q1) = any(toffoli_types) 
                        and get_port_from_link(prev_q1) = 2
+                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -98,14 +99,17 @@ begin
             -- If gates were updated by another process during the traversal of the for loop
             -- and do not match the template pattern anymore
             -- commit and move to the next candidate pair
-            if get_id_from_link(cx.prev_q1) != toffoli.id
-                or get_port_from_link(cx.prev_q1) != 2
-                or not ((cx.type = cxpow_type and cx.param = 1) 
+            if not ((cx.type = cxpow_type and cx.param = 1) 
                     or(cx.type = cx_type and cx.param = 0)
                 )
-                or get_id_from_link(toffoli.next_q3) != cx.id
-                or get_port_from_link(toffoli.next_q3) != 0
+                or get_id_from_link(cx.prev_q1) != toffoli.id
+                or get_id_from_link(cx.prev_q2) = toffoli.id
+                or get_port_from_link(cx.prev_q1) != 2
                 or not (toffoli.type = any(toffoli_types))
+                or get_id_from_link(toffoli.next_q3) != cx.id
+                or get_id_from_link(toffoli.next_q1) = cx.id
+                or get_id_from_link(toffoli.next_q2) = cx.id
+                or get_port_from_link(toffoli.next_q3) != 0
             then
                 commit;
                 continue;
