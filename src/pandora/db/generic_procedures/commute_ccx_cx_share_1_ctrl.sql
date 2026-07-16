@@ -61,8 +61,8 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q1) = any(toffoli_types) 
                        and get_port_from_link(prev_q1) in (0, 1)
-                            -- or (get_type_from_link(prev_q2) = any(toffoli_types) and get_port_from_link(prev_q2) = 2)
-                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
+                       -- ensure that the CNOT target is not on the same qubit as one of the Toffoli qubits
+                       and not left_dependency(prev_q2, get_id_from_link(prev_q1))
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -88,7 +88,7 @@ begin
                     or(cx.type = cx_type and cx.param = 0)
                 )
                 or get_id_from_link(cx.prev_q1) != toffoli.id
-                or get_id_from_link(cx.prev_q2) = toffoli.id
+                or left_dependency(cx.prev_q2, toffoli.id)
                 or not (toffoli.type = any(toffoli_types))
                 or get_id_from_link(toffoli.next_q3) = cx.id                
             then
@@ -99,15 +99,18 @@ begin
             tof_port_connected := get_port_from_link(cx.prev_q1);
             if tof_port_connected = 0
                 and get_id_from_link(toffoli.next_q1) = cx.id
-                and get_id_from_link(toffoli.next_q2) != cx.id
-                and get_id_from_link(toffoli.next_q3) != cx.id
+
+                -- ensure that Toffoli's other two qubits are not on the same line as CNOT's qubits
+                and not right_dependency(toffoli.next_q2, cx.id)
+                and not right_dependency(toffoli.next_q3, cx.id)
+
                 and get_port_from_link(toffoli.next_q1) = 0
             then 
                 tof_ctrl_prev := toffoli.prev_q1;
             elsif tof_port_connected = 1
                 and get_id_from_link(toffoli.next_q2) = cx.id
-                and get_id_from_link(toffoli.next_q1) != cx.id
-                and get_id_from_link(toffoli.next_q3) != cx.id
+                and not right_dependency(toffoli.next_q1, cx.id)
+                and not right_dependency(toffoli.next_q3, cx.id)
                 and get_port_from_link(toffoli.next_q2) = 0
             then 
                 tof_ctrl_prev := toffoli.prev_q2;

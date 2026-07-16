@@ -21,11 +21,11 @@ declare
     toffoli record;
     cx record;
 
-    tof_ctrl_left_1 bigint; -- prev link of CNOT control to Toffoli control 
-    tof_ctrl_left_2 bigint; -- prev link of CNOT target to Toffoli control
+    tof_ctrl_left_cx_ctrl bigint; -- link of CNOT control to Toffoli control 
+    tof_ctrl_left_cx_tgt bigint; -- link of CNOT target to Toffoli control
 
-    tof_prev_id_1 bigint;
-    tof_prev_id_2 bigint;
+    tof_prev_c_id bigint;
+    tof_prev_t_id bigint;
     cx_next_q1_id bigint;
     cx_next_q2_id bigint;
 
@@ -118,8 +118,8 @@ begin
                 and get_port_from_link(toffoli.next_q1) = 0
                 and get_port_from_link(toffoli.next_q2) = 1
             then
-                tof_ctrl_left_1 := toffoli.prev_q1; 
-                tof_ctrl_left_2 := toffoli.prev_q2;
+                tof_ctrl_left_cx_ctrl := toffoli.prev_q1; 
+                tof_ctrl_left_cx_tgt := toffoli.prev_q2;
                 cx_ctrl_port := 0;
                 cx_tgt_port := 1;
             elsif
@@ -128,8 +128,8 @@ begin
                 and get_port_from_link(toffoli.next_q1) = 1
                 and get_port_from_link(toffoli.next_q2) = 0
             then
-                tof_ctrl_left_1 := toffoli.prev_q2; 
-                tof_ctrl_left_2 := toffoli.prev_q1;
+                tof_ctrl_left_cx_ctrl := toffoli.prev_q2; 
+                tof_ctrl_left_cx_tgt := toffoli.prev_q1;
                 cx_ctrl_port := 1;
                 cx_tgt_port := 0;
             else
@@ -140,12 +140,12 @@ begin
             -- Compute the ids of the neighbours
             cx_next_q1_id := get_id_from_link(cx.next_q1);
             cx_next_q2_id := get_id_from_link(cx.next_q2);
-            tof_prev_id_1 := get_id_from_link(tof_ctrl_left_1);
-            tof_prev_id_2 := get_id_from_link(tof_ctrl_left_2);
+            tof_prev_c_id := get_id_from_link(tof_ctrl_left_cx_ctrl); -- left neighbor on CNOT control line
+            tof_prev_t_id := get_id_from_link(tof_ctrl_left_cx_tgt); -- left neighbor on CNOT target line
     
             -- Attempt to lock the neighbours of the pair (left of first gate and right of second gate)
-            select * into left_1 from linked_circuit where id=tof_prev_id_1 for update skip locked;
-            select * into left_2 from linked_circuit where id=tof_prev_id_2 for update skip locked;
+            select * into left_1 from linked_circuit where id=tof_prev_c_id for update skip locked;
+            select * into left_2 from linked_circuit where id=tof_prev_t_id for update skip locked;
             select * into right_q1 from linked_circuit where id=cx_next_q1_id for update skip locked;
             select * into right_q2 from linked_circuit where id=cx_next_q2_id for update skip locked;
 
@@ -180,17 +180,17 @@ begin
             x_2_link := create_link(x_2, port_nr, x_type);
 
             -- Update links of the left and right neighbours 
-            perform update_next_link(tof_prev_id_1, toffoli.prev_q1, cx_ctrl);
-            perform update_next_link(tof_prev_id_2 , toffoli.prev_q2, cx_tgt);
+            perform update_next_link(tof_prev_c_id, tof_ctrl_left_cx_ctrl, cx_ctrl); 
+            perform update_next_link(tof_prev_t_id, tof_ctrl_left_cx_tgt, cx_tgt);
             perform update_prev_link(cx_next_q1_id, cx.next_q1, tof_ctrl_1);
             perform update_prev_link(cx_next_q2_id, cx.next_q2, x_2_link);
 
             -- Update Toffoli and CNOT 
-            update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (tof_ctrl_left_1, tof_ctrl_left_2, tof_ctrl_1, x_1_link) where id = cx.id; 
+            update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (tof_ctrl_left_cx_ctrl, tof_ctrl_left_cx_tgt, tof_ctrl_1, x_1_link) where id = cx.id; 
             if cx_ctrl_port = 0 then
-                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_ctrl, cx_tgt, cx_next_q1, x_2_link) where id = toffoli.id;
+                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_ctrl, x_1_link, cx_next_q1, x_2_link) where id = toffoli.id;
             else
-                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (cx_tgt, cx_ctrl, x_2_link, cx_next_q2) where id = toffoli.id;
+                update linked_circuit set (prev_q1, prev_q2, next_q1, next_q2) = (x_1_link, cx_ctrl, x_2_link, cx_next_q1) where id = toffoli.id;
             end if;
             
             commit; -- release the lock

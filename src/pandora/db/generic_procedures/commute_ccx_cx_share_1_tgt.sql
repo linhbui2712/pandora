@@ -56,7 +56,9 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q2) = any(toffoli_types) 
                        and get_port_from_link(prev_q2) = 2
-                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
+
+                       -- ensure that the CNOT control is not on the same qubit as any of the Toffoli qubits 
+                       and not left_dependency(prev_q1, get_id_from_link(prev_q2)) -- ensure that the CNOT control is not on the same qubit as one of the Toffoli qubits
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -83,12 +85,12 @@ begin
                 )
                 or get_id_from_link(cx.prev_q2) != toffoli.id
                 or get_port_from_link(cx.prev_q2) != 2
-                or get_id_from_link(cx.prev_q1) = toffoli.id
+                or left_dependency(cx.prev_q1, toffoli.id)
                 or not (toffoli.type = any(toffoli_types))
                 or get_id_from_link(toffoli.next_q3) != cx.id
                 or get_port_from_link(toffoli.next_q3) != 1
-                or get_id_from_link(toffoli.next_q1) = cx.id
-                or get_id_from_link(toffoli.next_q2) = cx.id    
+                or right_dependency(toffoli.next_q1, cx.id)
+                or right_dependency(toffoli.next_q2, cx.id)
             then
                 commit;
                 continue;
@@ -109,7 +111,7 @@ begin
                 commit;
                 continue;
             end if;
-
+            
             -- Compute new links for the pair and neighbouring gates 
             cx_tgt := create_link(cx.id, 1, cx.type);
             tof_tgt := create_link(toffoli.id, 2, toffoli.type);

@@ -87,7 +87,8 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q2) = any(toffoli_types) 
                        and get_port_from_link(prev_q2) in (0, 1)
-                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
+                       -- ensure that the CNOT control is not on the same qubit as one of the Toffoli qubits
+                       and not left_dependency(prev_q1, get_id_from_link(prev_q2))
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -115,7 +116,7 @@ begin
                     or (cx.type = cx_type and cx.param = 0)
                 )
                 or get_id_from_link(cx.prev_q2) != toffoli.id 
-                or get_id_from_link(cx.prev_q1) = toffoli.id
+                or left_dependency(cx.prev_q1, toffoli.id)
                 or not (toffoli.type = any(toffoli_types))
             then
                 commit;
@@ -125,16 +126,16 @@ begin
             tof_port_connected := get_port_from_link(cx.prev_q2);
             if tof_port_connected = 0
                 and get_id_from_link(toffoli.next_q1) = cx.id
-                and get_id_from_link(toffoli.next_q2) != cx.id
-                and get_id_from_link(toffoli.next_q3) != cx.id
+                and not right_dependency(toffoli.next_q2, cx.id)
+                and not right_dependency(toffoli.next_q3, cx.id)
                 and get_port_from_link(toffoli.next_q1) = 1
             then 
                 tof_ctrl_prev := toffoli.prev_q1;
                 tof_ctrl_next := toffoli.next_q2;
             elsif tof_port_connected = 1
                 and get_id_from_link(toffoli.next_q2) = cx.id
-                and get_id_from_link(toffoli.next_q1) != cx.id
-                and get_id_from_link(toffoli.next_q3) != cx.id
+                and not right_dependency(toffoli.next_q1, cx.id)
+                and not right_dependency(toffoli.next_q3, cx.id)
                 and get_port_from_link(toffoli.next_q2) = 1
             then 
                 tof_ctrl_prev := toffoli.prev_q2;
@@ -183,7 +184,7 @@ begin
 
             --- Insert a new Toffoli gate 
             insert into linked_circuit(prev_q1, prev_q2, prev_q3, type, param, switch, next_q1, next_q2, next_q3, label)
-            values (tof_new_link, cx_ctrl, tof_tgt, 23, 1, false, tof_ctrl_next, toffoli.next_q3, cx.next_q1, cx.label)
+            values (tof_new_link, cx_ctrl, tof_tgt, 23, 1, false, tof_ctrl_next, cx.next_q1, toffoli.next_q3, cx.label)
             returning id, type 
             into new_tof_id, new_tof_type;
 
@@ -201,7 +202,7 @@ begin
 
             -- Update the target pair Toffoli and CNOT 
             cx_next_q2 := cx.next_q2;
-            update linked_circuit set (prev_q2, next_q1, next_q2) = (tof_ctrl_prev, cx_and_neighbour_new_link, new_tof_ctrl_2) where id = cx.id; 
+            update linked_circuit set (prev_q2, next_q1, next_q2) = (tof_ctrl_prev, new_tof_ctrl_2, cx_and_neighbour_new_link) where id = cx.id; 
             if tof_port_connected = 0 then
                 update linked_circuit set (prev_q1, next_q1, next_q2, next_q3) = (cx_tgt, cx_next_q2, new_tof_ctrl_1, new_tof_tgt) where id = toffoli.id;
             else

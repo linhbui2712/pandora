@@ -78,7 +78,8 @@ begin
                        ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
                        and get_type_from_link(prev_q1) = any(toffoli_types) 
                        and get_port_from_link(prev_q1) = 2
-                       and get_id_from_link(prev_q1) != get_id_from_link(prev_q2)
+                       -- ensure that the CNOT target is not on the same qubit as any of the Toffoli qubits
+                       and not left_dependency(prev_q2, get_id_from_link(prev_q1))
                        -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
@@ -103,12 +104,12 @@ begin
                     or(cx.type = cx_type and cx.param = 0)
                 )
                 or get_id_from_link(cx.prev_q1) != toffoli.id
-                or get_id_from_link(cx.prev_q2) = toffoli.id
+                or left_dependency(cx.prev_q2, toffoli.id)
                 or get_port_from_link(cx.prev_q1) != 2
                 or not (toffoli.type = any(toffoli_types))
                 or get_id_from_link(toffoli.next_q3) != cx.id
-                or get_id_from_link(toffoli.next_q1) = cx.id
-                or get_id_from_link(toffoli.next_q2) = cx.id
+                or right_dependency(toffoli.next_q1, cx.id)
+                or right_dependency(toffoli.next_q2, cx.id)
                 or get_port_from_link(toffoli.next_q3) != 0
             then
                 commit;
