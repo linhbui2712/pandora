@@ -126,6 +126,76 @@ CREATE TABLE IF NOT EXISTS gate_types (
     name text unique not null
 );
 
+-- Check if a target gate is reachable by following the previous links of the gate.
+CREATE OR REPLACE FUNCTION left_dependency(
+    start_link bigint,
+    target_gate_id bigint
+)
+RETURNS boolean
+LANGUAGE sql
+AS
+$$
+WITH RECURSIVE reachable(id) AS (
+    SELECT get_id_from_link(start_link) AS id
+
+    UNION
+
+    SELECT get_id_from_link(x.link) AS id
+    FROM reachable r
+    JOIN linked_circuit lc
+      ON lc.id = r.id
+    CROSS JOIN LATERAL (
+        VALUES
+            (lc.prev_q1),
+            (lc.prev_q2),
+            (lc.prev_q3)
+    ) AS x(link)
+    WHERE x.link IS NOT NULL
+      AND get_id_from_link(x.link) IS NOT NULL
+)
+SELECT EXISTS (
+    SELECT 1
+    FROM reachable
+    WHERE id = target_gate_id
+      AND id IS NOT NULL
+);
+$$;
+
+-- Check if a target gate is reachable by following the next links of the gate.
+CREATE OR REPLACE FUNCTION right_dependency(
+    start_link bigint,
+    target_gate_id bigint
+)
+RETURNS boolean
+LANGUAGE sql
+AS
+$$
+WITH RECURSIVE reachable(id) AS (
+    SELECT get_id_from_link(start_link) AS id
+
+    UNION
+
+    SELECT get_id_from_link(x.link) AS id
+    FROM reachable r
+    JOIN linked_circuit lc
+      ON lc.id = r.id
+    CROSS JOIN LATERAL (
+        VALUES
+            (lc.next_q1),
+            (lc.next_q2),
+            (lc.next_q3)
+    ) AS x(link)
+    WHERE x.link IS NOT NULL
+      AND get_id_from_link(x.link) IS NOT NULL
+)
+SELECT EXISTS (
+    SELECT 1
+    FROM reachable
+    WHERE id = target_gate_id
+      AND id IS NOT NULL
+);
+$$;
+
 INSERT INTO gate_types (id, name) VALUES
 (0, 'in'),
 (1, 'out'),
