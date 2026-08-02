@@ -207,6 +207,7 @@ class PandoraService:
             'generic_procedures/commute_ccx_cx_match_ctrl_tgt.sql',
             'generic_procedures/commute_ccx_cx_share_2_controls.sql',
             'generic_procedures/rewrite_ccx_cx_share_2_controls.sql',
+            'generic_procedures/commute_ccx_cx_share_2_mixed.sql',
             'generic_procedures/commute_ccx_cx_share_1_tgt_ctrl.sql',
             'generic_procedures/commute_ccx_cx_share_1_ctrl_tgt.sql',
             'generic_procedures/commute_ccx_cx_share_1_ctrl.sql',

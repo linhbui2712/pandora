@@ -917,6 +917,262 @@ async def test_commute_ccx_cx_share_1_target_b(pass_count, timeout):
     finally:
         await db.close()
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [1])
+@pytest.mark.parametrize("timeout", [1])
+async def test_commute_ccx_cx_share_2_mixed_a(pass_count, timeout):
+    """ Test case when the CNOT control depends on the Toffoli qubits."""
+
+    q1, q2, q3 = (
+        cirq.NamedQubit("q1"),
+        cirq.NamedQubit("q2"),
+        cirq.NamedQubit("q3"),
+    )
+    initial_circuit = cirq.Circuit(
+        [   
+            cirq.X.on(q1),
+            cirq.H.on(q2),
+            cirq.Z.on(q3),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CX.on(q3, q2),
+            cirq.H.on(q1),
+            cirq.Z.on(q2),
+            cirq.X.on(q3)
+
+        ]
+    )
+
+    expected_circuit = cirq.Circuit(
+        [   
+            cirq.X.on(q1),
+            cirq.H.on(q2),
+            cirq.Z.on(q3),
+            cirq.CX.on(q3, q2),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CCX.on(q1, q3, q2),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.H.on(q1),
+            cirq.Z.on(q2),
+            cirq.X.on(q3)
+        ]
+    )
+
+    db = PandoraDB("default_config.json")
+    await db.connect()
+
+    try:
+        repo = GateRepository(db)
+        service = PandoraService(db=db, repo=repo)
+
+        await service.build_circuit(
+            circuit=initial_circuit
+        )
+
+        optimiser = PandoraOptimiser(
+            db=db,
+            pass_count=pass_count,
+            timeout=timeout,
+            logger_id=1,
+        )
+
+        optimiser.commute_ccx_cx_share_2_mixed(
+            dedicated_nproc=1,
+        )
+
+        await optimiser.start()
+
+        extracted_circuit = await service.load_circuit(
+            circuit_type="cirq"
+        )
+        extracted_circuit = remove_io_gates(extracted_circuit)
+
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("Actual:")
+        print(extracted_circuit)
+
+        assert_same_up_to_qubit_permutation(
+            expected=expected_circuit,
+            actual=extracted_circuit,
+        )
+
+    finally:
+        await db.close()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [1])
+@pytest.mark.parametrize("timeout", [1])
+async def test_commute_ccx_cx_share_2_mixed_b(pass_count, timeout):
+    """ Test case when the CNOT control depends on the Toffoli qubits."""
+
+    q1, q2, q3 = (
+        cirq.NamedQubit("q1"),
+        cirq.NamedQubit("q2"),
+        cirq.NamedQubit("q3"),
+    )
+    initial_circuit = cirq.Circuit(
+        [   
+            cirq.H.on(q2),
+            cirq.X.on(q1),
+            cirq.Z.on(q3),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CX.on(q3, q1),
+            cirq.H.on(q1),
+            cirq.Z.on(q2),
+            cirq.X.on(q3),
+        ]
+    )
+
+    expected_circuit = cirq.Circuit(
+        [   
+            cirq.X.on(q1),
+            cirq.H.on(q2),
+            cirq.Z.on(q3),
+            cirq.CX.on(q3, q1),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.CCX.on(q2, q3, q1),
+            cirq.CCX.on(q1, q2, q3),
+            cirq.H.on(q1),
+            cirq.Z.on(q2),
+            cirq.X.on(q3)
+        ]
+    )
+
+    db = PandoraDB("default_config.json")
+    await db.connect()
+
+    try:
+        repo = GateRepository(db)
+        service = PandoraService(db=db, repo=repo)
+
+        await service.build_circuit(
+            circuit=initial_circuit
+        )
+
+        optimiser = PandoraOptimiser(
+            db=db,
+            pass_count=pass_count,
+            timeout=timeout,
+            logger_id=1,
+        )
+
+        optimiser.commute_ccx_cx_share_2_mixed(
+            dedicated_nproc=1,
+        )
+
+        await optimiser.start()
+
+        extracted_circuit = await service.load_circuit(
+            circuit_type="cirq"
+        )
+        extracted_circuit = remove_io_gates(extracted_circuit)
+
+        print("Initial:")
+        print(initial_circuit)
+        print("Expected:")
+        print(expected_circuit)
+        print("Actual:")
+        print(extracted_circuit)
+
+        assert_same_up_to_qubit_permutation(
+            expected=expected_circuit,
+            actual=extracted_circuit,
+        )
+
+    finally:
+        await db.close()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [int(1e9)])
+@pytest.mark.parametrize("stop_after", [5])
+async def test_wrong(pass_count, stop_after):
+            
+            initial_circuit = cirq.Circuit([
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(0), cirq.LineQubit(2), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(3), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(3), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(2), cirq.LineQubit(3)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(1), cirq.LineQubit(3), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(3)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(1), cirq.LineQubit(2), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(3)),
+    ),
+])
+
+
+            print("Initial:")
+            print(initial_circuit)
+            
+            db = PandoraDB("default_config.json")
+            await db.connect()
+
+            try:
+                repo = GateRepository(db)
+                service = PandoraService(db=db, repo=repo)
+
+                await service.build_circuit(circuit=initial_circuit)
+
+                optimiser = PandoraOptimiser(
+                    db=db,
+                    pass_count=pass_count,
+                    timeout=stop_after,
+                    logger_id=2,
+                )
+                optimiser.commute_ccx_cx_share_2_mixed(
+                    dedicated_nproc=2,
+                )
+
+                optimiser.commute_ccx_cx_share_2_controls(
+                    dedicated_nproc=1,
+                )
+                optimiser.commute_ccx_cx_match_ctrl_tgt(
+                    dedicated_nproc=1,
+                )
+                optimiser.commute_ccx_share_target_with_cx_control(
+                    dedicated_nproc=1,
+                )
+                optimiser.commute_ccx_share_control_with_cx_target(
+                    dedicated_nproc=1,
+                )
+                optimiser.commute_ccx_cx_share_1_control(
+                    dedicated_nproc=1,
+                )
+                optimiser.commute_ccx_cx_share_1_target(
+                    dedicated_nproc=3,
+                )
+                optimiser.rewrite_ccx_cx_share_2_controls(
+                    dedicated_nproc=1,
+                )
+                
+                await optimiser.start()
+
+                extracted_circuit = await service.load_circuit(circuit_type="cirq")
+                extracted_circuit = remove_io_gates(extracted_circuit)
+                print("Extracted:")
+                print(extracted_circuit)
+
+                assert_logically_equivalent_up_to_qubit_permutation(expected=extracted_circuit, actual=initial_circuit)
+                
+            finally:
+                await db.close()
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("pass_count", [int(1e9)])
@@ -935,6 +1191,9 @@ async def test_logical_correctness_random(pass_count, stop_after):
                     "add_ccx_cx_ctrls_share_ctrl_tgt",
                     "add_ccx_cx_tgt_share_ctrl",
                     "add_ccx_cx_ctrl_share_tgt",
+                    "add_ccx_cx_share_1_ctrl",
+                    "add_ccx_cx_share_1_tgt",
+                    "add_ccx_cx_ctrl_tgt_share_tgt_ctrl",
                 ],
                 add_margins=False,
             )
@@ -979,7 +1238,9 @@ async def test_logical_correctness_random(pass_count, stop_after):
                 optimiser.rewrite_ccx_cx_share_2_controls(
                     dedicated_nproc=1,
                 )
-
+                optimiser.commute_ccx_cx_share_2_mixed(
+                    dedicated_nproc=1,
+                )
                 await optimiser.start()
 
                 extracted_circuit = await service.load_circuit(circuit_type="cirq")
@@ -1007,6 +1268,9 @@ async def test_race_condition(pass_count, timeout, stop_after, trials):
             "add_ccx_cx_ctrls_share_ctrl_tgt",
             "add_ccx_cx_tgt_share_ctrl",
             "add_ccx_cx_ctrl_share_tgt",
+            "add_ccx_cx_share_1_ctrl",
+            "add_ccx_cx_share_1_tgt",
+            "add_ccx_cx_ctrl_tgt_share_tgt_ctrl",
         ],
         add_margins=False,
     )
@@ -1049,6 +1313,9 @@ async def test_race_condition(pass_count, timeout, stop_after, trials):
             optimiser.rewrite_ccx_cx_share_2_controls(
                 dedicated_nproc=2,
             )
+            optimiser.commute_ccx_cx_share_2_mixed(
+                dedicated_nproc=2,
+            )
 
             await optimiser.start()
             
@@ -1063,61 +1330,107 @@ async def test_race_condition(pass_count, timeout, stop_after, trials):
         finally:
             await db.close()
 
-# @pytest.mark.asyncio
-# @pytest.mark.parametrize("pass_count", [int(1e9)])
-# @pytest.mark.parametrize("stop_after", [5])
-# async def test_fail_circuit_with_each_rule(pass_count, stop_after):
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pass_count", [int(1e9)])
+@pytest.mark.parametrize("stop_after", [5])
+async def test_fail_circuit_with_each_rule(pass_count, stop_after):
 
-#     initial_circuit = cirq.Circuit([
-#         cirq.Moment(
-#             cirq.TOFFOLI(cirq.LineQubit(1), cirq.LineQubit(4), cirq.LineQubit(0)),
-#         ),
-#         cirq.Moment(
-#             cirq.CNOT(cirq.LineQubit(1), cirq.LineQubit(0)),
-#         ),
-#         cirq.Moment(
-#             cirq.TOFFOLI(cirq.LineQubit(1), cirq.LineQubit(0), cirq.LineQubit(4)),
-#         ),
-#         cirq.Moment(
-#             cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(1)),
-#             cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(3), cirq.LineQubit(4)),
-#         ),
+    initial_circuit = cirq.Circuit([
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(3), cirq.LineQubit(2), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(2), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(0), cirq.LineQubit(3)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(3), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(1), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(3), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(1), cirq.LineQubit(3), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(3)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(0), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(3), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(0), cirq.LineQubit(3), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(2), cirq.LineQubit(3)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(0), cirq.LineQubit(3), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(1), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(3), cirq.LineQubit(2), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(2), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(3), cirq.LineQubit(0), cirq.LineQubit(2)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(1)),
+    ),
+    cirq.Moment(
+        cirq.TOFFOLI(cirq.LineQubit(2), cirq.LineQubit(1), cirq.LineQubit(0)),
+    ),
+    cirq.Moment(
+        cirq.CNOT(cirq.LineQubit(0), cirq.LineQubit(2)),
+    ),
+])
         
-# ])
+    for rule in ["commute_ccx_cx_share_2_controls", "commute_ccx_cx_match_ctrl_tgt", "commute_ccx_share_target_with_cx_control", "commute_ccx_share_control_with_cx_target", "commute_ccx_cx_share_1_control", "commute_ccx_cx_share_1_target", "rewrite_ccx_cx_share_2_controls", "commute_ccx_cx_share_2_mixed"]: 
+        test_circuit = initial_circuit.copy()
+        print(f"Testing rule: {rule}")
+        db = PandoraDB("default_config.json")
+        await db.connect()
 
-#     for rule in ["rewrite_ccx_cx_share_2_controls","commute_ccx_cx_share_2_controls", "commute_ccx_cx_match_ctrl_tgt", "commute_ccx_share_target_with_cx_control", "commute_ccx_share_control_with_cx_target", "commute_ccx_cx_share_1_control", "commute_ccx_cx_share_1_target"]:
-#         test_circuit = initial_circuit.copy()
-#         print(f"Testing rule: {rule}")
-#         db = PandoraDB("default_config.json")
-#         await db.connect()
+        try:
+            repo = GateRepository(db)
+            service = PandoraService(db=db, repo=repo)
 
-#         try:
-#             repo = GateRepository(db)
-#             service = PandoraService(db=db, repo=repo)
+            await service.build_circuit(circuit=initial_circuit)
 
-#             await service.build_circuit(circuit=initial_circuit)
+            optimiser = PandoraOptimiser(
+                db=db,
+                pass_count=pass_count,
+                timeout=stop_after,
+                logger_id=2,
+            )
 
-#             optimiser = PandoraOptimiser(
-#                 db=db,
-#                 pass_count=pass_count,
-#                 timeout=stop_after,
-#                 logger_id=2,
-#             )
+            optimiser.__getattribute__(rule)(     
+                dedicated_nproc=1,
+            )
 
-#             optimiser.__getattribute__(rule)(     
-#                 dedicated_nproc=1,
-#             )
-
-#             await optimiser.start()
+            await optimiser.start()
             
-#             extracted_circuit = await service.load_circuit(circuit_type="cirq")
-#             extracted_circuit = remove_io_gates(extracted_circuit)
-#             print("Extracted:")
-#             print(repr(extracted_circuit))
+            extracted_circuit = await service.load_circuit(circuit_type="cirq")
+            extracted_circuit = remove_io_gates(extracted_circuit)
+            print("Extracted:")
+            print(repr(extracted_circuit))
 
-#             assert_logically_equivalent_up_to_qubit_permutation(expected=extracted_circuit, actual=initial_circuit)
+            assert_logically_equivalent_up_to_qubit_permutation(expected=extracted_circuit, actual=initial_circuit)
 
-#         finally:
-#             await db.close()
+        finally:
+            await db.close()
 
    
