@@ -206,6 +206,25 @@ def add_generic_toffoli_cnot(circuit, qubits):
                             cirq.CNOT(cx_control_qubit, cx_target_qubit)])
     return mutated_circuit
 
+def add_ccx_cx_ctrl_tgt_share_tgt_ctrl(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to randomly chosen qubits of
+    the input circuit, where one Toffoli control qubit and target qubit are the same as 
+    the CNOT target and control qubits, respectively.
+
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit = random.sample(qubits, 3)
+    cx_control_qubit = ccx_target_qubit
+    cx_target_qubit = random.choice([ccx_control_qubit_1, ccx_control_qubit_2])
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit
+
 def add_ccx_cx_ctrl_tgt_share_ctrl_tgt(circuit, qubits):
     """Adds a Toffoli-gate and a CNOT-gate to a randomly chosen triplet of qubits of
     the input circuit, where one Toffoli control qubit and target qubit are the same as 
@@ -271,6 +290,40 @@ def add_ccx_cx_ctrl_share_tgt(circuit, qubits):
     mutated_circuit = circuit.unfreeze(copy=True)
     ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit, cx_control_qubit = random.sample(qubits, 4)
     cx_target_qubit = random.choice([ccx_control_qubit_1, ccx_control_qubit_2])
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit
+
+def add_ccx_cx_share_1_ctrl(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to four randomly chosen qubits of
+    the input circuit, where one Toffoli control qubit and CNOT control qubit are the same.
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit, cx_target_qubit = random.sample(qubits, 4)
+    cx_control_qubit = random.choice([ccx_control_qubit_1, ccx_control_qubit_2])
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CNOT(cx_control_qubit, cx_target_qubit)])
+    return mutated_circuit  
+
+def add_ccx_cx_share_1_tgt(circuit, qubits):
+    """Adds a Toffoli-gate and a CNOT-gate to four randomly chosen qubits of
+    the input circuit, where one Toffoli target qubit and CNOT target qubit are the same.
+    Args:
+        circuit (cirq.Circuit): circuit to which a Toffoli and a CNOT are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added gates
+    """
+
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit, cx_control_qubit = random.sample(qubits, 4)
+    cx_target_qubit = ccx_target_qubit
     mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
                             cirq.CNOT(cx_control_qubit, cx_target_qubit)])
     return mutated_circuit

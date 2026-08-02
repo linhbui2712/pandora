@@ -151,7 +151,6 @@ WITH RECURSIVE reachable(id) AS (
             (lc.prev_q3)
     ) AS x(link)
     WHERE x.link IS NOT NULL
-      AND get_id_from_link(x.link) IS NOT NULL
 )
 SELECT EXISTS (
     SELECT 1
@@ -186,7 +185,6 @@ WITH RECURSIVE reachable(id) AS (
             (lc.next_q3)
     ) AS x(link)
     WHERE x.link IS NOT NULL
-      AND get_id_from_link(x.link) IS NOT NULL
 )
 SELECT EXISTS (
     SELECT 1
