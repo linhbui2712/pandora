@@ -59,7 +59,11 @@ def test_random_cnt_reconstruction(n_circuits=100):
                 'add_ccx_cx_ctrl_share_tgt',
                 'add_two_nots',
                 'add_two_cnots',
-                'add_toffoli'
+                'add_toffoli',
+                'add_ccx_cx_ctrl_tgt_share_tgt_ctrl',
+                'add_ccx_cx_share_1_ctrl',
+                'add_ccx_cx_share_1_tgt',
+                'add_two_toffolis'
                 ]
 
     for i in range(n_circuits):

@@ -68,7 +68,7 @@ begin
     select id into cx_type from gate_types where name = 'cx';
     select id into cxpow_type from gate_types where name = 'cxpow';
     select array_agg(id) into toffoli_types from gate_types where name in ('ccx', 'toffoli');    
-    select id into x_type from gate_types where name = 'xpow';
+    select id into x_type from gate_types where name = 'paulix';
 
     while pass_count > 0 loop
          -- loop through all CNOT gates that currently fit the pattern we are looking for:
