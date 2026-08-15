@@ -88,6 +88,13 @@ class PandoraOptimiser:
             f"{self.LOG_SLEEP_FOR}, {self.logger_id}, {self.timeout})"
         )
         self._call_thread_proc(logger_proc)
+    
+    def log_cnt(self) -> None:
+        logger_proc = (
+            f"call generate_optimisation_cnt_stats("
+            f"{self.LOG_SLEEP_FOR}, {self.logger_id}, {self.timeout})"
+        )
+        self._call_thread_proc(logger_proc)
 
     async def generate_csv(self, logger_id: int, out_path: str | None = None) -> Path:
         """
@@ -118,6 +125,41 @@ class PandoraOptimiser:
                     "h_count",
                     "cx_count",
                     "x_count",
+                ]
+            )
+            for row in rows:
+                writer.writerow(row)
+
+        return out_file
+    
+    async def generate_csv_cnt(self, logger_id: int, out_path: str | None = None) -> Path:
+        """
+        Export optimization_results_cnt for a given logger_id to CSV.
+        """
+        out_file = Path(out_path or f"adder_{logger_id}.csv")
+
+        async with self.db.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                select *
+                from optimization_results_cnt
+                where logger_id = $1
+                order by id
+                """,
+                logger_id,
+            )
+
+        with out_file.open("w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    "id",
+                    "elapsed_time",
+                    "logger_id",
+                    "total_count",
+                    "x_count",
+                    "cx_count",
+                    "ccx_count",
                 ]
             )
             for row in rows:
@@ -159,6 +201,23 @@ class PandoraOptimiser:
                 f"{self.pass_count}, {self.timeout})"
             )
             self._call_thread_proc(stored_procedure)
+
+    def cancel_three_qubit_gates(
+        self,
+        gate_types: tuple[PandoraGateTranslator, PandoraGateTranslator],
+        gate_param: float = 1.0,
+        dedicated_nproc: int | None = None,
+    ) -> None:
+        type_left, type_right = gate_types
+
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call cancel_three_qubit("
+                f"{type_left.value}, {type_right.value}, "
+                f"{gate_param}, {gate_param}, "
+                f"{self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)    
 
     def cancel_two_qubit_gates_equiv(
         self,

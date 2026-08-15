@@ -241,6 +241,18 @@ create table IF NOT EXISTS public.optimization_results
     x_count int
 );
 
+-- Stores aggregate statistics collected while running optimisation procedures.
+create table IF NOT EXISTS public.optimization_results_cnt
+(
+    id int,
+    elapsed_time float,
+    logger_id int,
+    total_count int,
+    x_count int,
+    cx_count int,
+    ccx_count int
+);
+
 -- Batched circuit table used for intermediate processing steps.
 create table IF NOT EXISTS public.batched_circuit
 (

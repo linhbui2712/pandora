@@ -328,6 +328,23 @@ def add_ccx_cx_share_1_tgt(circuit, qubits):
                             cirq.CNOT(cx_control_qubit, cx_target_qubit)])
     return mutated_circuit
 
+def add_two_toffolis(circuit, qubits):
+    """Adds two Toffoli-gates to a randomly chosen triplet of qubits of
+    the input circuit.
+
+    Args:
+        circuit (cirq.Circuit): circuit to which 2 Toffolis are added
+        qubits (list(cirq.LineQubit)): qubits of the circuit
+
+    Returns:
+        mutated_circuit (cirq.Circuit): circuit with added Toffolis
+    """
+    mutated_circuit = circuit.unfreeze(copy=True)
+    ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit = random.sample(qubits, 3)
+    mutated_circuit.append([cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit),
+                            cirq.CCNOT(ccx_control_qubit_1, ccx_control_qubit_2, ccx_target_qubit)])
+    return mutated_circuit
+
 def add_two_nots(circuit, qubits):
     """Adds two NOT gates to a randomly chosen qubit of the input circuit.
 

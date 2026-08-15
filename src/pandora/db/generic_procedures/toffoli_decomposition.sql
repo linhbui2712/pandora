@@ -43,6 +43,7 @@ declare
 	count int = 0;
     distinct_count int;
     distinct_existing int;
+    neighbor_ids bigint[];
 begin
 	while found = true loop
 		count := count + 1;
@@ -59,16 +60,45 @@ begin
 			tof_next_q2_id := div(toffoli.next_q2, 10);
 			tof_next_q3_id := div(toffoli.next_q3, 10);
 
-    	    conc_modulus_left_q1 := 'next_q' || mod(toffoli.prev_q1, 10) + 1;
+if toffoli.prev_q1 is not null then
+	        conc_modulus_left_q1 := 'next_q' || mod(toffoli.prev_q1, 10) + 1;
+	    else
+	        conc_modulus_left_q1 := null;
+	    end if;
+	    if toffoli.prev_q2 is not null then
 			conc_modulus_left_q2 := 'next_q' || mod(toffoli.prev_q2, 10) + 1;
-    	    conc_modulus_left_q3 := 'next_q' || mod(toffoli.prev_q3, 10) + 1;
+	    else
+	        conc_modulus_left_q2 := null;
+	    end if;
+	    if toffoli.prev_q3 is not null then
+	    	    conc_modulus_left_q3 := 'next_q' || mod(toffoli.prev_q3, 10) + 1;
+	    else
+	        conc_modulus_left_q3 := null;
+	    end if;
+	    if toffoli.next_q1 is not null then
 			conc_modulus_right_q1 := 'prev_q' || mod(toffoli.next_q1, 10) + 1;
+	    else
+	        conc_modulus_right_q1 := null;
+	    end if;
+	    if toffoli.next_q2 is not null then
 			conc_modulus_right_q2 := 'prev_q' || mod(toffoli.next_q2, 10) + 1;
+	    else
+	        conc_modulus_right_q2 := null;
+	    end if;
+	    if toffoli.next_q3 is not null then
 			conc_modulus_right_q3 := 'prev_q' || mod(toffoli.next_q3, 10) + 1;
+	    else
+	        conc_modulus_right_q3 := null;
+	    end if;
 
-    	    select count(*) into distinct_count from (select distinct unnest(array[tof_prev_q1_id, tof_prev_q2_id, tof_prev_q3_id, tof_next_q1_id, tof_next_q2_id, tof_next_q3_id])) as it;
+	    neighbor_ids := array_remove(
+	        array[tof_prev_q1_id, tof_prev_q2_id, tof_prev_q3_id, tof_next_q1_id, tof_next_q2_id, tof_next_q3_id],
+	        null
+	    );
+
+	    select count(*) into distinct_count from (select distinct unnest(neighbor_ids)) as it;
 			select count(*) into distinct_existing from
-			        (select * from linked_circuit where id in (tof_prev_q1_id, tof_prev_q2_id, tof_prev_q3_id, tof_next_q1_id, tof_next_q2_id, tof_next_q3_id) for update skip locked) as it;
+			        (select id from linked_circuit where id = any(neighbor_ids) for update skip locked) as it;
 
 			if distinct_count = distinct_existing then
                 insert into linked_circuit values (default, toffoli.prev_q3, null, null, 8, 1, 0, false, null, null, null, false, toffoli.label, false, null)
@@ -119,12 +149,24 @@ begin
                 update linked_circuit set next_q1 = o_id * 10 where id = n_id;
                 update linked_circuit set next_q1 = toffoli.next_q3 where id = o_id;
 
-                execute 'update linked_circuit set ' || conc_modulus_left_q1 || ' = $1 where id = $2' using d_id * 10, tof_prev_q1_id;
-                execute 'update linked_circuit set ' || conc_modulus_left_q2 || ' = $1 where id = $2' using b_id * 10, tof_prev_q2_id;
-                execute 'update linked_circuit set ' || conc_modulus_left_q3 || ' = $1 where id = $2' using a_id * 10, tof_prev_q3_id;
-                execute 'update linked_circuit set ' || conc_modulus_right_q1 || ' = $1 where id = $2' using l_id * 10, tof_next_q1_id;
-                execute 'update linked_circuit set ' || conc_modulus_right_q2 || ' = $1 where id = $2' using m_id * 10, tof_next_q2_id;
-                execute 'update linked_circuit set ' || conc_modulus_right_q3 || ' = $1 where id = $2' using o_id * 10, tof_next_q3_id;
+                if conc_modulus_left_q1 is not null and tof_prev_q1_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_left_q1 || ' = $1 where id = $2' using d_id * 10, tof_prev_q1_id;
+                end if;
+                if conc_modulus_left_q2 is not null and tof_prev_q2_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_left_q2 || ' = $1 where id = $2' using b_id * 10, tof_prev_q2_id;
+                end if;
+                if conc_modulus_left_q3 is not null and tof_prev_q3_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_left_q3 || ' = $1 where id = $2' using a_id * 10, tof_prev_q3_id;
+                end if;
+                if conc_modulus_right_q1 is not null and tof_next_q1_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_right_q1 || ' = $1 where id = $2' using l_id * 10, tof_next_q1_id;
+                end if;
+                if conc_modulus_right_q2 is not null and tof_next_q2_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_right_q2 || ' = $1 where id = $2' using m_id * 10, tof_next_q2_id;
+                end if;
+                if conc_modulus_right_q3 is not null and tof_next_q3_id is not null then
+                    execute 'update linked_circuit set ' || conc_modulus_right_q3 || ' = $1 where id = $2' using o_id * 10, tof_next_q3_id;
+                end if;
 
                 delete from linked_circuit where id=toffoli.id;
             end if;

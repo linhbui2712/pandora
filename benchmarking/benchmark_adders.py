@@ -249,7 +249,7 @@ async def main():
             pandora_optimizer.log()
             
             await pandora_optimizer.start()
-            await pandora_optimizer.generate_csv(logger_id=n_bits)
+            await pandora_optimizer.generate_csv(logger_id=n_bits, out_path=f"benchmarking/results/adder_result_600s/adder_{n_bits}.csv")
 
         finally:
             await db.close()

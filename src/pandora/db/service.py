@@ -177,6 +177,7 @@ class PandoraService:
             'max_missed_rounds',
             'benchmark_results',
             'optimization_results',
+            'optimization_results_cnt',
             'gate_types',
             'layered_lscom'
         ]
@@ -201,9 +202,10 @@ class PandoraService:
             'generic_procedures/cancel_two_qubit.sql',
             'generic_procedures/commute_single_control_left.sql',
             'generic_procedures/replace_two_sq_with_one.sql',
-            'generic_procedures/toffoli_decomposition.sql',
+            'generic_procedures/equiv_tof_decomp.sql',
             'generic_procedures/cx_to_hhcxhh.sql',
             'generic_procedures/hhcxhh_to_cx.sql',
+            'generic_procedures/cancel_three_qubit.sql',
             'generic_procedures/commute_ccx_cx_match_ctrl_tgt.sql',
             'generic_procedures/commute_ccx_cx_share_2_controls.sql',
             'generic_procedures/rewrite_ccx_cx_share_2_controls.sql',
@@ -219,6 +221,7 @@ class PandoraService:
             # benchmarking only
             'generic_procedures/hhcxhh_to_cx_seq.sql',
             'generic_procedures/_generate_optimisation_stats.sql',
+            'generic_procedures/_generate_optimisation_cnt_stats.sql',
         ]
         async with self.db.pool.acquire() as conn:
             for path in procedures:

@@ -63,7 +63,7 @@ async def run_single_case(
     for _ in range(n_rounds):
         rewrites, qc = generate_random_HHCXHH_circuit_occasionally_flipped(
             n_templates=nq,
-            n_qubits=3,
+            n_qubits=50,
             proba=sample_percentage / 100,
         )
 
@@ -115,13 +115,13 @@ async def main():
 
     for sample_percentage in [0.1, 1, 10]:
 
-        db = PandoraDB()
+        db = PandoraDB("default_config.json")
         await db.connect()
 
         try:
-            out_file = f"pandora_template_search_random_flip_{sample_percentage}.csv"
+            out_file = f"benchmarking/results/pandora_seq/pandora_template_search_random_flip_{sample_percentage}.csv"
             if nprocs > 0:
-                out_file = f"pandora_template_search_random_flip_{sample_percentage}_parallel.csv"
+                out_file = f"benchmarking/results/pandora_par/pandora_template_search_random_flip_{sample_percentage}_parallel.csv"
 
             for nq in range(10_000, 100_001, 10_000):
                 avg_time = await run_single_case(

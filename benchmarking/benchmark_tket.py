@@ -121,6 +121,6 @@ if __name__ == "__main__":
             op_time = time.time() - start_time
             print('Time to rewrite:', op_time)
 
-            with open(f'TKET_template_search_{sample_percentage}.csv', 'a') as f:
+            with open(f'benchmarking/results/tket_seq/TKET_template_search_{sample_percentage}.csv', 'a') as f:
                 writer = csv.writer(f)
                 writer.writerow((nq, op_time, sample_percentage))

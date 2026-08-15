@@ -28,6 +28,13 @@ Make sure you have:
 * ```NPROCS > 0``` -  parallel rewrite,
 * ```NPROCS = 0``` - sequential rewrite used for comparison with Qiskit and TKET.
 
+## Running the Benchmark of for Qiskit
+
+```direction``` gives the rewrite direction
+
+* ```direction == 0``` - start from CX-only circuit
+* ```direction != 0``` - start from HH-CX-HH circuit with occasional flips
+
 ### What the script does
 
 For each sample percentage ```[0.1, 1, 10]``` the script:
@@ -48,12 +55,12 @@ bash run_apptainer.sh benchmarking/benchmark_pandora.py default_config.json <NPR
 
 ### For Qiskit
 ```bash
-bash run_apptainer_no_posgtres.sh benchmarking/benchmark_qiskit.py
+bash run_apptainer_no_postgres.sh benchmarking/benchmark_qiskit.py <direction>
 ```
 
 ### For TKET
 ```bash
-bash run_apptainer_no_posgtres.sh benchmarking/benchmark_tket.py
+bash run_apptainer_no_postgres.sh benchmarking/benchmark_tket.py (currently doing the oposite: cx to hhcxhh??)
 ```
 
 ### Plot

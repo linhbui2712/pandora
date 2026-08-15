@@ -157,7 +157,7 @@ def main():
     
     for sample_percentage in [0.1, 1, 10]:
         
-        out_file = f"qiskit_template_search_random_flip_{sample_percentage}.csv"
+        out_file = f"benchmarking/results/qiskit_seq/qiskit_template_search_random_flip_{sample_percentage}.csv"
 
         for n_templates in range(10_000, 100_001, 10_000):
             print(

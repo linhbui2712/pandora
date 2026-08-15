@@ -21,7 +21,7 @@ benchmarking/adders/Adder2048.txt
 It is recommended to run this benchmark using apptainer (see instructions in project readme):
 
 ```bash
-bash run_apptainer.sh benchmarking/benchmark_adders.py default_config.json
+bash python3 run_apptainer.sh benchmarking/benchmark_adders.py default_config.json
 ```
 
 For each adder size in ```[16, 32, 64, 128, 256, 512, 1024, 2048]```, the script:
