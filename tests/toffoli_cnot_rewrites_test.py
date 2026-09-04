@@ -1158,7 +1158,7 @@ async def test_logical_correctness_random(pass_count, stop_after):
     for n_qubits in range(4, 6):
         for n_templates in range(5, 80, 5):
             initial_circuit = cirq_util.create_random_circuit(
-                n_qubits=4,
+                n_qubits=n_qubits,
                 n_templates=n_templates,
                 templates=[
                     "add_toffoli",

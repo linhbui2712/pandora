@@ -35,7 +35,7 @@ def get_decomposed_vbe_ripple_adder(n_bits: int, kind: str = "full") -> QuantumC
 
 async def main():
     # 30 seconds timeout for the optimiser
-    timeout = 30
+    timeout = 60
     # print(new_adder.draw())
     db = PandoraDB("default_config.json")
     await db.connect()
@@ -60,17 +60,17 @@ async def main():
             await service.build_circuit(
                 circuit=adder
             )
-            # optimiser.commute_ccx_cx_match_ctrl_tgt(
-            #     dedicated_nproc=1,
-            # )
+            optimiser.commute_ccx_cx_match_ctrl_tgt(
+                dedicated_nproc=1,
+            )
 
-            # optimiser.commute_ccx_cx_share_1_control(
-            #     dedicated_nproc=1,
-            # )
+            optimiser.commute_ccx_cx_share_1_control(
+                dedicated_nproc=1,
+            )
 
-            # optimiser.commute_ccx_cx_share_1_target(
-            #     dedicated_nproc=1,
-            # )
+            optimiser.commute_ccx_cx_share_1_target(
+                dedicated_nproc=1,
+            )
             optimiser.cancel_three_qubit_gates(
                 gate_types=(CCX, CCX),
                 gate_param=1,
@@ -80,39 +80,40 @@ async def main():
             optimiser.cancel_two_qubit_gates(
                 gate_types=(CX, CX),
                 gate_param=1,
-                dedicated_nproc=3,
+                dedicated_nproc=1,
             )
 
             optimiser.cancel_single_qubit_gates(
-                    gate_types=(X, X),
-                    gate_params=(0, 0),
-                    dedicated_nproc=3,
-                )
-            
-            optimiser.commute_ccx_cx_share_2_controls(
+                gate_types=(X, X),
+                gate_params=(0, 0),
                 dedicated_nproc=1,
             )
             
-            # optimiser.commute_ccx_share_target_with_cx_control(
+            # optimiser.commute_ccx_cx_share_2_controls(
             #     dedicated_nproc=1,
             # )
             
-            # optimiser.commute_ccx_share_control_with_cx_target(
-            #     dedicated_nproc=1,
-            # )
+            optimiser.commute_ccx_share_target_with_cx_control(
+                dedicated_nproc=1,
+            )
             
-            # optimiser.commute_ccx_cx_share_2_mixed(
-            #     dedicated_nproc=1,
-            # )
-            # optimiser.rewrite_ccx_cx_share_2_controls(
-            #     dedicated_nproc=1,
-            # )
+            optimiser.commute_ccx_share_control_with_cx_target(
+                dedicated_nproc=1,
+            )
+            
+            optimiser.commute_ccx_cx_share_2_mixed(
+                dedicated_nproc=1,
+            )
+
+            optimiser.rewrite_ccx_cx_share_2_controls(
+                dedicated_nproc=1,
+            )
             
 
             optimiser.log_cnt()
                 
             await optimiser.start()
-            await optimiser.generate_csv_cnt(logger_id=n_bits, out_path=f"benchmarking/thesis_benchmarking/vbe/vbe_full_adder_commute_ha_only/vbe_adder_{n_bits}.csv")
+            await optimiser.generate_csv_cnt(logger_id=n_bits, out_path=f"benchmarking/thesis_benchmarking/vbe/vbe_full_adder_60/vbe_adder_{n_bits}.csv")
 
     finally:
         await db.close()

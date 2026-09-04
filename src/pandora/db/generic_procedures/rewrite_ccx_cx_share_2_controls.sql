@@ -74,15 +74,15 @@ begin
          -- loop through all CNOT gates that currently fit the pattern we are looking for:
         for gate in
             select * from linked_circuit
-                     where
-                       ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
-                       and get_type_from_link(prev_q1) = any(toffoli_types) 
-                       and get_type_from_link(prev_q2) = any(toffoli_types)
-                       and get_id_from_link(prev_q1) = get_id_from_link(prev_q2)
-                       and ((get_port_from_link(prev_q1) = 0 and get_port_from_link(prev_q2) = 1)
-                        or (get_port_from_link(prev_q1) = 1 and get_port_from_link(prev_q2) = 0)
-                       )
-                       -- and partition_id = my_partition
+                where
+                ((type = cxpow_type and param = 1) or (type = cx_type and param = 0))
+                and get_type_from_link(prev_q1) = any(toffoli_types) 
+                and get_type_from_link(prev_q2) = any(toffoli_types)
+                and get_id_from_link(prev_q1) = get_id_from_link(prev_q2)
+                and ((get_port_from_link(prev_q1) = 0 and get_port_from_link(prev_q2) = 1)
+                or (get_port_from_link(prev_q1) = 1 and get_port_from_link(prev_q2) = 0)
+                )
+                -- and partition_id = my_partition
         loop 
             -- attempt to lock the two gates
             -- if not already locked by another process (skip locked), lock the pair of gates (for update)

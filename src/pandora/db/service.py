@@ -202,7 +202,6 @@ class PandoraService:
             'generic_procedures/cancel_two_qubit.sql',
             'generic_procedures/commute_single_control_left.sql',
             'generic_procedures/replace_two_sq_with_one.sql',
-            'generic_procedures/equiv_tof_decomp.sql',
             'generic_procedures/cx_to_hhcxhh.sql',
             'generic_procedures/hhcxhh_to_cx.sql',
             'generic_procedures/cancel_three_qubit.sql',
