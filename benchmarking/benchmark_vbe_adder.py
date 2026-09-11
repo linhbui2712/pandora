@@ -11,30 +11,11 @@ from pandora.translation.translator import PandoraGateTranslator
 from pandora import PandoraOptimiser
 
 def get_decomposed_vbe_ripple_adder(n_bits: int, kind: str = "full") -> QuantumCircuit:
-    # adder = adder_ripple_v95(n_bits)
-    # new_adder = QuantumCircuit(*adder.qregs)
-
-    # for instruction in adder.data:
-    #     op = instruction.operation
-
-    #     if op.name in {"Carry", "Carry_dg", "Sum"}:
-    #         # Insert the internal definition of the composite gate
-    #         definition = op.definition
-    #         new_adder.compose(
-    #             definition,
-    #             qubits=[adder.find_bit(q).index for q in instruction.qubits],
-    #             inplace=True,
-    #         )
-    #     else:
-    #         # Keep CCX and CX as they are
-    #         new_adder.append(op, instruction.qubits)
-    # return new_adder
-
     adder = VBERippleCarryAdder(num_state_qubits=n_bits, kind=kind)
     return adder.decompose().decompose()
 
 async def main():
-    # 30 seconds timeout for the optimiser
+    # 60 seconds timeout for the optimiser
     timeout = 60
     # print(new_adder.draw())
     db = PandoraDB("default_config.json")

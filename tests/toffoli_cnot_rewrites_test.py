@@ -1308,7 +1308,6 @@ async def test_race_condition(pass_count, timeout, stop_after, trials):
                 dedicated_nproc=2,
             )
 
-            op
 
             await optimiser.start()
             
