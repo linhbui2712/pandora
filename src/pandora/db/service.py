@@ -179,7 +179,8 @@ class PandoraService:
             'optimization_results',
             'optimization_results_cnt',
             'gate_types',
-            'layered_lscom'
+            'layered_lscom',
+            'rewrite_snapshots'
         ]
         async with self.db.pool.acquire() as conn:
             for t in tables:
@@ -200,6 +201,7 @@ class PandoraService:
             # sequential
             'generic_procedures/cancel_single_qubit.sql',
             'generic_procedures/cancel_two_qubit.sql',
+            'generic_procedures/cancel_two_qubit_with_snapshot.sql',
             'generic_procedures/commute_single_control_left.sql',
             'generic_procedures/replace_two_sq_with_one.sql',
             'generic_procedures/cx_to_hhcxhh.sql',
@@ -213,6 +215,7 @@ class PandoraService:
             'generic_procedures/commute_ccx_cx_share_1_ctrl_tgt.sql',
             'generic_procedures/commute_ccx_cx_share_1_ctrl.sql',
             'generic_procedures/commute_ccx_cx_share_1_tgt.sql',
+            'generic_procedures/rewrite_ccx_cx_share_2_controls_with_snapshot.sql',
 
             # worker procedures
             'generic_procedures/generate_edge_list.sql',
@@ -238,6 +241,11 @@ class PandoraService:
 
             async with self.db.pool.acquire() as conn:
                 await conn.execute(query)
+
+        async with self.db.acquire() as conn:
+            await conn.execute(
+                "ALTER SEQUENCE rewrite_snapshot_seq RESTART WITH 1"
+            )
 
     @staticmethod
     def _add_inputs(edge_records):

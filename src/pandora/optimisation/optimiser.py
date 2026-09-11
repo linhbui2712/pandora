@@ -202,6 +202,23 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
+    def cancel_two_qubit_gates_with_snapshot(
+        self,
+        gate_types: tuple[PandoraGateTranslator, PandoraGateTranslator],
+        gate_param: float = 1.0,
+        dedicated_nproc: int | None = None,
+    ) -> None:
+        type_left, type_right = gate_types
+
+        for _ in range(dedicated_nproc or 0):
+            stored_procedure = (
+                f"call cancel_two_qubit_with_snapshot("
+                f"{type_left.value}, {type_right.value}, "
+                f"{gate_param}, {gate_param}, "
+                f"{self.pass_count}, {self.timeout})"
+            )
+            self._call_thread_proc(stored_procedure)
+
     def cancel_three_qubit_gates(
         self,
         gate_types: tuple[PandoraGateTranslator, PandoraGateTranslator],
@@ -309,6 +326,13 @@ class PandoraOptimiser:
             )
             self._call_thread_proc(stored_procedure)
 
+    def rewrite_ccx_cx_share_2_controls_with_snapshot(self, dedicated_nproc: int | None = None) -> None:
+            for _ in range(dedicated_nproc or 0):
+                stored_procedure = (
+                    f"call rewrite_ccx_cx_share_2_controls_with_snapshot({self.pass_count}, {self.timeout})"
+                )
+                self._call_thread_proc(stored_procedure)
+    
     def commute_ccx_cx_match_ctrl_tgt(self, dedicated_nproc: int | None = None) -> None:
         for _ in range(dedicated_nproc or 0):
             stored_procedure = (

@@ -1,0 +1,160 @@
+create or replace procedure cancel_two_qubit_with_snapshot(type_1 int, type_2 int, param_1 float, param_2 float, pass_count int, timeout int)
+    language plpgsql
+as
+$$
+declare
+    first record;
+    second record;
+    gate record;
+
+    first_id_plus_one bigint;
+    first_id_plus_zero bigint;
+	first_prev_q1_id bigint;
+	first_prev_q2_id bigint;
+    second_next_q1_id bigint;
+	second_next_q2_id bigint;
+
+    a record;
+    b record;
+    c record;
+    d record;
+
+    start_time timestamp with time zone;
+    snapshot_id bigint;
+
+begin
+    start_time := clock_timestamp();
+
+	 while pass_count > 0 loop
+        for gate in
+            select * from linked_circuit
+                     where
+                     type=type_1
+                     and param = param_1
+                     and get_id_from_link(next_q1) = get_id_from_link(next_q2)
+                     and get_type_from_link(next_q1) = type_2
+        loop
+            select * into first from linked_circuit where id = gate.id for update skip locked;
+            select * into second from linked_circuit where id = get_id_from_link(first.next_q1) for update skip locked;
+
+            if first.id is null
+                or second.id is null then
+                commit;
+                continue;
+            end if;
+
+            if second.param != param_2
+                or second.type != type_2
+                or first.param != param_1
+                or first.type != type_1
+            then
+                commit;
+                continue;
+            end if;
+
+            first_id_plus_one := create_link(first.id, 1, first.type);
+            first_id_plus_zero := create_link(first.id, 0, first.type);
+
+            if second.prev_q1 != first_id_plus_zero
+                or second.prev_q2 != first_id_plus_one
+            then
+                commit;
+                continue;
+            end if;
+
+            first_prev_q1_id := get_id_from_link(first.prev_q1);
+            first_prev_q2_id := get_id_from_link(first.prev_q2);
+            second_next_q1_id := get_id_from_link(second.next_q1);
+            second_next_q2_id := get_id_from_link(second.next_q2);
+
+            select * into a from linked_circuit where id = first_prev_q1_id for update skip locked;
+            select * into b from linked_circuit where id = first_prev_q2_id for update skip locked;
+            select * into c from linked_circuit where id = second_next_q1_id for update skip locked;
+            select * into d from linked_circuit where id = second_next_q2_id for update skip locked;
+
+            -- Lock the 4 neighbours
+            if a.id is null
+                or b.id is null
+                or c.id is null
+                or d.id is null
+            then
+                commit;
+                continue;
+            end if;
+
+            if get_port_from_link(first.prev_q1) = 0 then
+                update linked_circuit set next_q1 = second.next_q1 where id = first_prev_q1_id;
+            else
+                update linked_circuit set next_q2 = second.next_q1 where id = first_prev_q1_id;
+            end if;
+
+            if get_port_from_link(first.prev_q2) = 0 then
+                update linked_circuit set next_q1 = second.next_q2 where id = first_prev_q2_id;
+            else
+                update linked_circuit set next_q2 = second.next_q2 where id = first_prev_q2_id;
+            end if;
+
+            if get_port_from_link(second.next_q1) = 0 then
+                update linked_circuit set prev_q1 = first.prev_q1 where id = second_next_q1_id;
+            else
+                update linked_circuit set prev_q2 = first.prev_q1 where id = second_next_q1_id;
+            end if;
+
+            if get_port_from_link(second.next_q2) = 0 then
+                update linked_circuit set prev_q1 = first.prev_q2 where id = second_next_q2_id;
+            else
+                update linked_circuit set prev_q2 = first.prev_q2 where id = second_next_q2_id;
+            end if;
+
+            delete from linked_circuit lc where lc.id in (first.id, second.id);
+
+            snapshot_id := nextval('rewrite_snapshot_seq');
+
+            insert into rewrite_snapshots (
+                snapshot_id,
+                gate_id,
+                prev_q1,
+                prev_q2,
+                prev_q3,
+                type,
+                param,
+                global_shift,
+                switch,
+                next_q1,
+                next_q2,
+                next_q3,
+                label,
+                cl_ctrl,
+                meas_key
+            )
+            select
+                snapshot_id,
+                id,
+                prev_q1,
+                prev_q2,
+                prev_q3,
+                type,
+                param,
+                global_shift,
+                switch,
+                next_q1,
+                next_q2,
+                next_q3,
+                label,
+                cl_ctrl,
+                meas_key
+            from linked_circuit;
+
+            commit; -- release locks after applying template
+
+        end loop; -- end gate loop
+
+	    if extract(epoch from (clock_timestamp() - start_time)) > timeout then
+            exit;
+        end if;
+
+        pass_count = pass_count - 1;
+
+	end loop; --end pass loop
+
+end;$$;

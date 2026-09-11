@@ -99,6 +99,33 @@ class GateRepository:
 
                 if batch:
                     yield batch
+    async def fetch_snapshot(self, snapshot_id: int) -> List[PandoraGate]:
+        query = """
+            select
+                gate_id as id,
+                prev_q1,
+                prev_q2,
+                prev_q3,
+                type,
+                param,
+                global_shift,
+                switch,
+                next_q1,
+                next_q2,
+                next_q3,
+                null::int as visited,
+                label,
+                cl_ctrl,
+                meas_key
+            from rewrite_snapshots
+            where snapshot_id = $1
+            order by gate_id
+        """
+
+        async with self.db.acquire() as conn:
+            rows = await conn.fetch(query, snapshot_id)
+
+        return [PandoraGate.from_db_row(row) for row in rows]
 
 
 class GateLayerRepository:

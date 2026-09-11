@@ -113,6 +113,27 @@ create table IF NOT EXISTS public.linked_circuit
     meas_key smallint
 ) WITH (FILLFACTOR = 100);
 
+CREATE TABLE IF NOT EXISTS public.rewrite_snapshots
+(
+    snapshot_id bigint,
+    gate_id bigint,
+    prev_q1 bigint,
+    prev_q2 bigint,
+    prev_q3 bigint,
+    type smallint,
+    param real,
+    global_shift real,
+    switch boolean,
+    next_q1 bigint,
+    next_q2 bigint,
+    next_q3 bigint,
+    label char,
+    cl_ctrl boolean,
+    meas_key smallint
+);
+
+CREATE SEQUENCE IF NOT EXISTS public.rewrite_snapshot_seq;
+
 -- Index used by the equivalence benchmark queries.
 CREATE INDEX linked_circuit_type_idx on linked_circuit(type);
 
