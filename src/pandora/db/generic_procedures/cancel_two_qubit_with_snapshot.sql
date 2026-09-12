@@ -125,7 +125,8 @@ begin
                 next_q3,
                 label,
                 cl_ctrl,
-                meas_key
+                meas_key,
+                rule_name
             )
             select
                 snapshot_id,
@@ -142,7 +143,8 @@ begin
                 next_q3,
                 label,
                 cl_ctrl,
-                meas_key
+                meas_key,
+                'cancel_two_qubit'
             from linked_circuit;
 
             commit; -- release locks after applying template

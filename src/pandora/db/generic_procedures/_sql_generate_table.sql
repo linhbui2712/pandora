@@ -129,7 +129,8 @@ CREATE TABLE IF NOT EXISTS public.rewrite_snapshots
     next_q3 bigint,
     label char,
     cl_ctrl boolean,
-    meas_key smallint
+    meas_key smallint,
+    rule_name text
 );
 
 CREATE SEQUENCE IF NOT EXISTS public.rewrite_snapshot_seq;

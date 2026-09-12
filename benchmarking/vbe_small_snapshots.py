@@ -22,7 +22,7 @@ async def main():
     CCX = PandoraGateTranslator.CCXPowGate
     
     try:
-        for n_bits in [2]:
+        for n_bits in [4]:
 
             adder = get_decomposed_vbe_ripple_adder(n_bits=n_bits)
             
@@ -66,13 +66,15 @@ async def main():
             await optimiser.start()
             snapshot_ids = await db.pool.fetch(
                 """
-                select distinct snapshot_id
+                select snapshot_id, max(rule_name) as rule_name
                 from rewrite_snapshots
+                group by snapshot_id
                 order by snapshot_id
                 """
             )
             for index, row in enumerate(snapshot_ids, start=1):
                 snapshot_id = row["snapshot_id"]
+                rule_name = row["rule_name"]
                 gates = await repo.fetch_snapshot(snapshot_id)
                 circuit = pandora_to_circuit(gates, "qiskit")
                 circuit = remove_io_gates(circuit, type="qiskit")
@@ -80,7 +82,7 @@ async def main():
                 gate_counts = circuit.count_ops()
 
                 print()
-                print(f"After rewrite application {index}:")
+                print(f"After rewrite application {index} ({rule_name}):")
                 print(f"CNOT count: {gate_counts.get('cx', 0)}")
                 print(f"NOT count: {gate_counts.get('x', 0)}")
                 print(f"Toffoli count: {gate_counts.get('ccx', 0)}")

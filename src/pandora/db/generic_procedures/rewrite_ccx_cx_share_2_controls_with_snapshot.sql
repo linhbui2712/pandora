@@ -211,7 +211,8 @@ begin
                 next_q3,
                 label,
                 cl_ctrl,
-                meas_key
+                meas_key,
+                rule_name
             )
             select
                 snapshot_id,
@@ -228,7 +229,8 @@ begin
                 next_q3,
                 label,
                 cl_ctrl,
-                meas_key
+                meas_key,
+                'commute_ccx_cx'
             from linked_circuit;
             raise notice 'rewrite applied. snapshot id = %', snapshot_id;
 
